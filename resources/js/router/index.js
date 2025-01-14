@@ -3,6 +3,7 @@ import { onMounted } from 'vue';
 
 import App from '../components/App.vue';
 import { useRouterStore } from "../stores/routerStore.js";
+import Chat from "@/Components/Chat.vue";
 
 
 
@@ -42,7 +43,16 @@ const routes = [
     //         },
     //     ]
     // },
-
+    {
+        path: '/',
+        name: 'Main',
+        component: App,
+    },
+    {
+        path: '/chat',
+        name: 'Chat',
+        component: Chat,
+    }
 ];
 
 const router = createRouter({
