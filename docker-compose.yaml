@@ -39,7 +39,7 @@ services:
         source: ./
         target: /srv/app
     tty: true
-
+    
   postgres:
     image: postgres:17
     volumes:

@@ -17,6 +17,7 @@ get-pwd:
 	echo $(PWD)
 
 docker-up:
+	@sudo chmod -R 777 .
 	@docker-compose -p ${INDEX} up -d
 
 docker-down:
