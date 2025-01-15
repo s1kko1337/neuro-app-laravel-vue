@@ -43,8 +43,6 @@ export default {
     setup() {
         const routerStore = useRouterStore();
         const router = useRouter();
-        const currentTheme = ref('light');
-
 
 
         onMounted(async () => {
