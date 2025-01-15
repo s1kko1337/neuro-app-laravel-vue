@@ -1,6 +1,6 @@
 <template>
-    <div class="flex-1 bg-neutral-300 relative h-full">
-        <div class="">
+    <div class="flex flex-col items-center justify-center">
+        <div class="text-cyan-50">
             Это чат
         </div>
         <div class="absolute right-2 top-2">
@@ -23,7 +23,7 @@ export default {
         const router = useRouter();
 
         const exitHandler = async () => {
-            await router.push('/main');
+            await router.push('/');
         };
 
         return {

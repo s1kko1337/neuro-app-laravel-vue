@@ -1,78 +1,90 @@
 <template>
-  <div class="flex flex-col flex-1 min-h-screen bg-neutral-200">
-      <div class="flex h-1/5 bg-cyan-700 items-center justify-between w-full">
-          <div class="flex">navigation</div>
-          <div :class="['flex items-center justify-center', currentRouter === '/chat' ? 'hidden' : '']">
-            <router-link to="/chat">
-                <div class="shadow-md px-16 py-2 rounded-lg bg-emerald-800 hover:bg-emerald-700 hover:scale-95 transition-transform duration-300 ease-in-out">
-                    Открыть чат
+    <div class="w-full min-h-screen bg-primary flex flex-col">
+        <Navbar/>
+        <div :class="['flex flex-1 items-center justify-center', currentRouter === '/chat' ? 'hidden' : '']">
+
+            <div class="max-w-2xl text-center space-y-8 p-6">
+                    <TypewritterText text="Welcome to AI Chat Assistant" :speed="100"></TypewritterText>
+                    <p class="text-xl text-secondary">
+                        Your intelligent conversation partner powered by advanced AI
+                    </p>
+                    <router-link to="/chat">
+                        <div
+                            class="px-8 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-lg"
+                        >
+                            Start Chatting
+                        </div>
+                    </router-link>
                 </div>
-            </router-link>
-          </div>
-      </div>
-      <div class="flex flex-1 h-full w-full">
-          <div v-if="currentRouter !== '/'" class="flex-1">
-            <router-view></router-view>
-          </div>
-      </div>
-      <div class="flex h-1/5 justify-center bg-cyan-700">
-          <span>footer</span>
-      </div>
-  </div>
+            </div>
+
+            <div class="flex-1">
+                <div v-if="currentRouter !== '/'" class="flex-1">
+                    <router-view></router-view>
+                </div>
+            </div>
+        </div>
 </template>
 
 
-
-
 <script>
-import {computed, onMounted, ref} from 'vue';
-import {useRouterStore} from "@/stores/routerStore.js";
+import {computed, onMounted, ref, watch} from 'vue';
+import {useRouterStore} from "../stores/routerStore.js";
 import {useRouter} from "vue-router";
+import Navbar from "./Navbar.vue";
+import ThemeToggle from "./ThemeToggle.vue";
+import TypewritterText from "./TypewritterText.vue";
+export default {
+    components: {
+        Navbar,
+        ThemeToggle,
+        TypewritterText,
+    },
+    setup() {
+        const routerStore = useRouterStore();
+        const router = useRouter();
+        const currentTheme = ref('light');
 
-    export default {
-        setup() {
-            const routerStore = useRouterStore()
-            const router = useRouter()
 
 
-            onMounted(async () => {
-                const lastVisitedRoute = routerStore.lastVisitedRoute;
-                await new Promise(resolve => setTimeout(resolve, 1));
+        onMounted(async () => {
+            const lastVisitedRoute = routerStore.lastVisitedRoute;
+            await new Promise(resolve => setTimeout(resolve, 1));
 
-                const isResetPasswordRoute = router.currentRoute.value.name === 'ResetPassword' && router.currentRoute.value.params.token;
-                if (isResetPasswordRoute) {
-                    return;
-                }
-
-                try {
-                    const currentRoutePath = router.currentRoute.value.path;
-
-                    // Обновленное условие перенаправления
-                    const authRoutes = ['/', '/login'];
-                    const shouldRedirect = authRoutes.includes(currentRoutePath) && lastVisitedRoute;
-
-                    if (shouldRedirect) {
-                        const routeExists = router.getRoutes().some(route => route.path === lastVisitedRoute);
-
-                        if (routeExists) {
-                            await router.push(lastVisitedRoute);
-                        }
-                    }
-                } catch (error) {
-                    // Обработка ошибок остается без изменений
-                    if (error.response) {
-
-                    } else {
-
-                    }
-                }
-            });
-
-            const currentRouter = computed(() => router.currentRoute.value.path);
-
-            return {
-                currentRouter
+            const isResetPasswordRoute = router.currentRoute.value.name === 'ResetPassword' && router.currentRoute.value.params.token;
+            if (isResetPasswordRoute) {
+                return;
             }
+
+            try {
+                const currentRoutePath = router.currentRoute.value.path;
+
+                // Обновленное условие перенаправления
+                const authRoutes = ['/', '/login'];
+                const shouldRedirect = authRoutes.includes(currentRoutePath) && lastVisitedRoute;
+
+                if (shouldRedirect) {
+                    const routeExists = router.getRoutes().some(route => route.path === lastVisitedRoute);
+
+                    if (routeExists) {
+                        await router.push(lastVisitedRoute);
+                    }
+                }
+            } catch (error) {
+                // Обработка ошибок остается без изменений
+                if (error.response) {
+
+                } else {
+
+                }
+            }
+        });
+
+        const currentRouter = computed(() => router.currentRoute.value.path);
+
+        return {
+            currentRouter,
         }
     }
+}
 </script>

@@ -3,7 +3,7 @@ import { onMounted } from 'vue';
 
 import App from '../Components/App.vue';
 import { useRouterStore } from "../stores/routerStore.js";
-import Chat from "@/Components/Chat.vue";
+import Chat from "../Components/Chat.vue";
 
 
 
@@ -63,7 +63,7 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
     const routerStore = useRouterStore();
     if (to.path === '/') {
-        routerStore.setLastVisitedRoute('/main');
+        routerStore.setLastVisitedRoute('/');
     } else {
         routerStore.setLastVisitedRoute(to.path);
     }
