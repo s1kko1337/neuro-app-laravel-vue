@@ -6,7 +6,7 @@ export const useRouterStore = defineStore('router', {
     }),
     actions: {
         setLastVisitedRoute(route) {
-            if (!route) { // Проверка на пустую строку или null
+            if (!route) { 
                 this.lastVisitedRoute = '/main';
             } else {
                 this.lastVisitedRoute = route;

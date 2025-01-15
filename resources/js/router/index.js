@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { onMounted } from 'vue';
 
-import App from '../components/App.vue';
+import App from '../Components/App.vue';
 import { useRouterStore } from "../stores/routerStore.js";
 import Chat from "@/Components/Chat.vue";
 

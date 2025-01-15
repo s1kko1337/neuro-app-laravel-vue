@@ -17,6 +17,8 @@ get-pwd:
 	echo $(PWD)
 
 docker-up:
+	@sudo chmod -R 777 .
+	@sudo systemctl stop docker.socket
 	@docker-compose -p ${INDEX} up -d
 
 docker-down:
@@ -70,3 +72,8 @@ watch:
 
 node:
 	@docker-compose exec app-nodejs /bin/sh
+
+ollama:
+	@docker exec -it ollama /bin/bash
+	
+# docker exec -it ollama /bin/bash
