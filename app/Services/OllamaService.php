@@ -23,4 +23,20 @@ class OllamaService
         return response()->json($response,200);
 
     }
+
+    public function modelList (Request $request){
+        $response = Ollama::models();
+
+        return response()->json($response,200);
+
+    }
+
+    public function chat (Request $request){
+
+    }
+
+    public function chatMessage (Request $request){
+
+    }
+
 }
