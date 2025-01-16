@@ -18,7 +18,6 @@ get-pwd:
 
 docker-up:
 	@sudo chmod -R 777 .
-	@sudo systemctl stop docker.socket
 	@docker-compose -p ${INDEX} up -d
 
 docker-down:
@@ -65,8 +64,8 @@ chown:
 	@$(MAKE) app-php-cli-exec cmd="chown 1000:1000 -R ./"
 
 build:
-	@docker-compose run --rm app-nodejs 
-	
+	@docker-compose run --rm app-nodejs
+
 watch:
 	@docker-compose run --rm app-nodejs npm run dev
 
@@ -75,5 +74,5 @@ node:
 
 ollama:
 	@docker exec -it ollama /bin/bash
-	
+
 # docker exec -it ollama /bin/bash

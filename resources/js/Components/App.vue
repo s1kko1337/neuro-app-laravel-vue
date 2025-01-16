@@ -1,7 +1,9 @@
 <template>
     <div class="w-full min-h-screen bg-primary flex flex-col">
+        <div :class="[currentRouter === '/chat' ? 'hidden' : '']">
         <Navbar/>
-        <div :class="['flex flex-1 items-center justify-center', currentRouter === '/chat' ? 'hidden' : '']">
+        </div>
+        <div :class="['flex flex-1 items-center justify-center', currentRouter !== '/' ? 'hidden' : '']">
 
             <div class="max-w-2xl text-center space-y-8 p-6">
                     <TypewritterText text="Welcome to AI Chat Assistant" :speed="100"></TypewritterText>
