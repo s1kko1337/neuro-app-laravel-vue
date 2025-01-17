@@ -25,7 +25,7 @@ class OllamaService
 
     }
 
-    public function getModels (Request $request){
+    public function getModels (){
         try {
 
             $responseModelsInfo = Ollama::models();
