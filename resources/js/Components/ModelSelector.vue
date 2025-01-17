@@ -3,11 +3,11 @@
         class="w-48 p-2 rounded-lg border bg-secondary border-secondary text-primary"
     >
         <option
-            v-for="model in models"
-            :key="model.value"
-            :value="model.value"
+            v-for="(model, modelIndex) in models"
+            :key="modelIndex"
+            :value="model.name"
         >
-            {{ model.label }}
+            {{ model.name }}
         </option>
     </select>
 </template>
@@ -18,15 +18,22 @@ import {ref, onMounted} from "vue";
 export default {
     name: "ModelSelector",
     setup(props) {
-        const fetchModels = () => {
-            return [
-                {value: "gpt4", label: "GPT-4"},
-                {value: "gpt3.5", label: "GPT-3.5"},
-                {value: "claude", label: "Claude"},
-            ];
+        const models = ref([]);
+
+        const fetchModels = async () => {
+            try {
+                let response = await axios.get('/chat/models')
+                models.value = response.data.models
+                console.log(response.data.message)
+            } catch (e) {
+                if (e.response && e.response.data) {
+                    console.log(e.response.data)
+                } else {
+                    console.log(e.message)
+                }
+            }
         };
 
-        const models = ref([]);
         onMounted(() => {
             models.value = fetchModels();
         });
