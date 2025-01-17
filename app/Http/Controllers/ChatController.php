@@ -6,7 +6,7 @@ use App\Services\OllamaService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
-class ModelsController extends Controller
+class ChatController extends Controller
 {
 
     private OllamaService $ollamaService;

@@ -20,16 +20,18 @@ export default {
     name: "ModelSelector",
     setup(props) {
         const models = ref([]);
+        const currentModel = ref([])
 
-        onMounted(() => {
-            models.value = fetchModels();
+        onMounted(async () => {
+            await fetchModels();
+            currentModel.value = models.value[0].name
         });
 
         const fetchModels = async () => {
             try {
                 let response = await axios.get('/api/models')
                 models.value = response.data.models
-                    // console.log(response.data.message)
+                // console.log(response.data.message)
             } catch (e) {
                 if (e.response && e.response.data) {
                     console.log(e.response.data)
@@ -41,8 +43,7 @@ export default {
 
         const selectModelHandler = async (event) => {
             try {
-                let modelName = event.target.value
-                await axios.post('/chat/setModel', {modelName: modelName})
+                currentModel.value = event.target.value
             } catch (e) {
                 if (e.response && e.response.data) {
                     console.log(e.response.data)
