@@ -12,7 +12,7 @@
                     </p>
                     <router-link to="/chat">
                         <div
-                            class="px-8 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-lg"
+                            class="px-8 py-3 mt-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-lg"
                         >
                             Start Chatting
                         </div>

@@ -1,6 +1,7 @@
 <template>
     <select
         class="w-48 p-2 rounded-lg border bg-secondary border-secondary text-primary"
+        @change="selectModelHandler"
     >
         <option
             v-for="(model, modelIndex) in models"
@@ -20,11 +21,15 @@ export default {
     setup(props) {
         const models = ref([]);
 
+        onMounted(() => {
+            models.value = fetchModels();
+        });
+
         const fetchModels = async () => {
             try {
                 let response = await axios.get('/chat/models')
                 models.value = response.data.models
-                console.log(response.data.message)
+                    // console.log(response.data.message)
             } catch (e) {
                 if (e.response && e.response.data) {
                     console.log(e.response.data)
@@ -34,12 +39,22 @@ export default {
             }
         };
 
-        onMounted(() => {
-            models.value = fetchModels();
-        });
+        const selectModelHandler = async (event) => {
+            try {
+                let modelName = event.target.value
+                await axios.post('/chat/setModel', {modelName: modelName})
+            } catch (e) {
+                if (e.response && e.response.data) {
+                    console.log(e.response.data)
+                } else {
+                    console.log(e.message)
+                }
+            }
+        }
 
         return {
             models,
+            selectModelHandler
         };
     },
 };

@@ -3,6 +3,7 @@
 namespace App\Services;
 use Cloudstudio\Ollama\Facades\Ollama;
 use Illuminate\Http\Request;
+use mysql_xdevapi\Exception;
 
 
 class OllamaService
@@ -63,4 +64,21 @@ class OllamaService
 
     }
 
+    public function setModel (Request $request){
+        try {
+            $modelName = $request->modelName;
+
+
+
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'message' => "LLM models set successfully",
+                ]);
+            } else {
+                return view('app', ['message' => "LLM models get successfully", 'models' => $modelName]);
+            }
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Error set model', 'errors' => $e->getMessage()], 500);
+        }
+    }
 }

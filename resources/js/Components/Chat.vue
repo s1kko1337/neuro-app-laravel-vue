@@ -6,7 +6,7 @@
             <div class="flex items-center justify-between mb-8">
                 <button class="text-xl font-semibold color-primary"
                     @click="exitHandler">>
-                AI Chat
+                Home
                 </button>
                 <ThemeToggle theme={theme} setTheme={setTheme} />
             </div>

@@ -1,11 +1,8 @@
 <template>
     <div :class="['flex mb-4', isAi ? 'justify-start' : 'justify-end']">
         <div
-            :class="[
-        'max-w-[70%] rounded-lg p-4',
-        isAi ? 'bg-accent text-primary' : 'bg-secondary text-primary'
-      ]"
-        >
+            :class="['max-w-[70%] rounded-lg p-4',
+                isAi ? 'bg-accent text-primary' : 'bg-secondary text-primary']">
             <p class="text-primary">
                 {{ message }}
             </p>
