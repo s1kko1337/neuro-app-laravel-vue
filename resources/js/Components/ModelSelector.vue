@@ -22,7 +22,7 @@ export default {
 
         const fetchModels = async () => {
             try {
-                let response = await axios.get('/chat/models')
+                let response = await axios.get('/api/models')
                 models.value = response.data.models
                 console.log(response.data.message)
             } catch (e) {

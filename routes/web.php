@@ -1,24 +1,12 @@
 <?php
 
+use App\Services\OllamaService;
 use Illuminate\Support\Facades\Route;
 
 // Главная страница приложения
 Route::get('/', function () {
     return view('app');
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 // SPA-страница, если не определен URL
