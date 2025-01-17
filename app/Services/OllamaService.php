@@ -24,11 +24,35 @@ class OllamaService
 
     }
 
-    public function modelList (Request $request){
-        $response = Ollama::models();
+    public function getModels (Request $request){
+        try {
 
-        return response()->json($response,200);
+            $responseModelsInfo = Ollama::models();
+            $modelNames = [];
+            if (isset($responseModelsInfo['models']) && !empty($responseModelsInfo['models'])) {
+                foreach ($responseModelsInfo['models'] as $model) {
+                    $modelNames[] = $model['name']; // Извлекаем имя модели
+                }
+            } else {
+                // Обработка случая, когда моделей нет
+                echo "Модели не найдены.";
+            }
 
+            $modelNames = array_map(function($name) {
+                return ['name' => $name];
+            }, $modelNames);
+
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'message' => "LLM models get successfully",
+                    'models' => $modelNames
+                ]);
+            } else {
+                return view('app', ['message' => "LLM models get successfully", 'models' => $modelNames]);
+            }
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Error getting models', 'errors' => $e->getMessage()], 500);
+        }
     }
 
     public function chat (Request $request){
