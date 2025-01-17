@@ -8,3 +8,4 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('ask',[AskController::class, '__invoke']);
 Route::get('models', [ChatController::class, '__invoke']);
+Route::post('chat', [ChatController::class, 'send']);

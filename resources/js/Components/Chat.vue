@@ -21,16 +21,14 @@
             <div
                 class="flex justify-between items-center px-4 py-2 border-b color-primary border-secondary"
             >
-            <ModelSelector />
+            <ModelSelector @model-selected="handleModelSelected" />
         </div>
         <div class="flex-1 overflow-y-auto p-4">
             <ChatMessage
-                message="Hello, how can I help you?"
-                :isAi="true"
-            />
-            <ChatMessage
-                message="I need assistance with my account."
-                :isAi="false"
+                v-for="(msg, index) in messages"
+                :key="index"
+                :message="msg.content"
+                :isAi="msg.role === 'assistant'"
             />
         </div>
         <div
@@ -52,10 +50,12 @@
             </div>
             <input
                 type="text"
+                v-model="inputMessage"
+                @keyup.enter="sendMessage"
                 placeholder="Type your message..."
                 class="flex-1 p-2 rounded-lg border  bg-primary border-secondary focus:border-blue-500 outline-none"
             />
-            <button class="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+            <button @click="sendMessage" class="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
               <Send size="20"/>
             </button>
         </div>
@@ -65,17 +65,17 @@
     </div>
     </div>
 </template>
-
 <script>
 import {ref} from "vue";
-import { useRouter } from 'vue-router';
+import {useRouter} from 'vue-router';
 import ThemeToggle from "./ThemeToggle.vue";
 import ModelSelector from "./ModelSelector.vue";
 import ChatList from "./ChatList.vue";
 import ModelSettings from "./ModelSettings.vue";
 import FileUpload from "./FileUpload.vue";
 import ChatMessage from "./ChatMessage.vue";
-import {Upload, Send,Settings} from "lucide-vue-next";
+import {Upload, Send, Settings} from "lucide-vue-next";
+import axios from "axios";
 
 export default {
     name: 'Chat',
@@ -88,12 +88,15 @@ export default {
         ModelSelector,
         FileUpload,
         ChatMessage,
-        ModelSettings
+        ModelSettings,
     },
     setup() {
         const router = useRouter();
         const isFileUploadVisible = ref(false);
         const isModelSettingsVisible = ref(false);
+        const inputMessage = ref("");
+        const messages = ref([]);
+        const currentModel = ref("");
 
         const closeModelSettings = () => {
             isModelSettingsVisible.value = false;
@@ -105,13 +108,45 @@ export default {
             await router.push('/');
         };
 
+        const handleModelSelected = (model) => {
+            currentModel.value = model;
+        };
+
+        const sendMessage = async () => {
+            if (!inputMessage.value.trim()) return;
+
+            // Добавляем сообщение пользователя
+            messages.value.push({ role: "user", content: inputMessage.value });
+            inputMessage.value = "";
+
+            try {
+                // Отправляем запрос на сервер с использованием axios
+                const response = await axios.post('/api/chat', {
+                    messages: messages.value,
+                    model: currentModel.value, // Используем выбранную модель
+                });
+
+                // Обрабатываем обычный JSON-ответ
+                const assistantMessage = response.data.message;
+
+                // Добавляем сообщение ассистента в массив messages
+                messages.value.push({ role: "assistant", content: assistantMessage });
+            } catch (error) {
+                console.error("Error sending message:", error);
+            }
+        };
+
         return {
-            exitHandler,
             isFileUploadVisible,
             closeFileUpload,
             isModelSettingsVisible,
-            closeModelSettings
+            closeModelSettings,
+            exitHandler,
+            inputMessage,
+            messages,
+            sendMessage,
+            handleModelSelected,
         };
-    }
-}
+    },
+};
 </script>

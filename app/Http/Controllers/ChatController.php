@@ -23,4 +23,13 @@ class ChatController extends Controller
 
         return $response;
     }
+
+    public function send(Request $request)
+    {
+        $request->validate([
+            'messages' => 'required|array', // Массив сообщений
+        ]);
+
+        return $this->ollamaService->chat($request);
+    }
 }

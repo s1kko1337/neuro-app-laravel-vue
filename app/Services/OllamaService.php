@@ -3,7 +3,7 @@
 namespace App\Services;
 use Cloudstudio\Ollama\Facades\Ollama;
 use Illuminate\Http\Request;
-use mysql_xdevapi\Exception;
+use Illuminate\Support\Facades\Log;
 
 
 class OllamaService
@@ -27,15 +27,13 @@ class OllamaService
 
     public function getModels (){
         try {
-
             $responseModelsInfo = Ollama::models();
             $modelNames = [];
             if (isset($responseModelsInfo['models']) && !empty($responseModelsInfo['models'])) {
                 foreach ($responseModelsInfo['models'] as $model) {
-                    $modelNames[] = $model['name']; // Извлекаем имя модели
+                    $modelNames[] = $model['name'];
                 }
             } else {
-                // Обработка случая, когда моделей нет
                 echo "Модели не найдены.";
             }
 
@@ -56,8 +54,36 @@ class OllamaService
         }
     }
 
-    public function chat (Request $request){
+    public function chat(Request $request)
+    {
+        $messages = $request->input('messages');
+        $model = $request->input('model');
 
+        // Логгируем входные данные
+        Log::info('Request data:', [
+            'messages' => $messages,
+            'model' => $model,
+        ]);
+
+        $response = Ollama::agent('You know me really well!')
+            ->model($model)
+//            ->embendings()
+            ->chat($messages);
+
+        Log::info('Ollama response:', $response);
+
+        if (!isset($response['message'])) {
+            Log::error('Ollama response does not contain "message" key:', $response);
+            return response()->json([
+                'error' => 'Ollama response is invalid',
+            ], 500);
+        }
+
+        $assistantMessage = $response['message']['content'] ?? $response['message'];
+
+        return response()->json([
+            'message' => $assistantMessage,
+        ], 200);
     }
 
     public function chatMessage (Request $request){
@@ -67,8 +93,6 @@ class OllamaService
     public function setModel (Request $request){
         try {
             $modelName = $request->modelName;
-
-
 
             if (request()->expectsJson()) {
                 return response()->json([

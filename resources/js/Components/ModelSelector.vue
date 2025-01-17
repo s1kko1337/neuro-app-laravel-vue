@@ -14,48 +14,40 @@
 </template>
 
 <script>
-import {ref, onMounted} from "vue";
+import { ref, onMounted } from "vue";
+import axios from "axios";
 
 export default {
     name: "ModelSelector",
-    setup(props) {
+    setup(props, { emit }) {
         const models = ref([]);
-        const currentModel = ref([])
+        const currentModel = ref("");
 
         onMounted(async () => {
             await fetchModels();
-            currentModel.value = models.value[0].name
+            if (models.value.length > 0) {
+                currentModel.value = models.value[0].name;
+                emit("model-selected", currentModel.value);
+            }
         });
 
         const fetchModels = async () => {
             try {
-                let response = await axios.get('/api/models')
-                models.value = response.data.models
-                // console.log(response.data.message)
+                let response = await axios.get('/api/models');
+                models.value = response.data.models;
             } catch (e) {
-                if (e.response && e.response.data) {
-                    console.log(e.response.data)
-                } else {
-                    console.log(e.message)
-                }
+                console.error("Error fetching models:", e);
             }
         };
 
         const selectModelHandler = async (event) => {
-            try {
-                currentModel.value = event.target.value
-            } catch (e) {
-                if (e.response && e.response.data) {
-                    console.log(e.response.data)
-                } else {
-                    console.log(e.message)
-                }
-            }
-        }
+            currentModel.value = event.target.value;
+            emit("model-selected", currentModel.value);
+        };
 
         return {
             models,
-            selectModelHandler
+            selectModelHandler,
         };
     },
 };
