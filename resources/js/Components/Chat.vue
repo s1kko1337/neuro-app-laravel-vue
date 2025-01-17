@@ -10,11 +10,14 @@
                 </button>
                 <ThemeToggle theme={theme} setTheme={setTheme} />
             </div>
-            <div class="flex flex-col h-[calc(100%-5rem)] justify-between">
-                <ChatList theme={theme} />
-                <button class="mt-4 flex items-center justify-center space-x-2 w-full px-4 py-2 rounded-lg text-secondary bg-primary hover:bg-blue-600 hover:text-primary ease-in-out transition-colors">
-                <span>New Chat</span>
-                </button>
+            <div class="flex flex-col h-[calc(100%-5rem)] justify-between overflow-y-auto px-2">
+                <ChatList theme={theme} ref="ChatList" class="flex-1"/>
+                <div class="my-auto sticky bottom-0">
+                    <button class="mt-4 flex items-center justify-center space-x-2 w-full px-4 py-2 rounded-lg text-secondary bg-primary hover:bg-blue-600 hover:text-primary ease-in-out transition-colors"
+                            @click="addChatHandler">
+                        <span>New Chat</span>
+                    </button>
+                </div>
             </div>
         </div>
         <div class="flex-1 flex flex-col">
@@ -97,6 +100,7 @@ export default {
         const inputMessage = ref("");
         const messages = ref([]);
         const currentModel = ref("");
+        const ChatList = ref(null)
 
         const closeModelSettings = () => {
             isModelSettingsVisible.value = false;
@@ -136,6 +140,10 @@ export default {
             }
         };
 
+        const addChatHandler = (event) => {
+            ChatList.value.createChatHandler();
+        }
+
         return {
             isFileUploadVisible,
             closeFileUpload,
@@ -146,6 +154,8 @@ export default {
             messages,
             sendMessage,
             handleModelSelected,
+            addChatHandler,
+            ChatList
         };
     },
 };

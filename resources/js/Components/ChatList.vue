@@ -26,8 +26,13 @@ export default {
             {id: 3, name: "Quick Questions"},
         ]);
 
+        const createChatHandler = () => {
+            chats.value.push({name: 'New chat'});
+        }
+
         return {
             chats,
+            createChatHandler
         };
     },
 };
