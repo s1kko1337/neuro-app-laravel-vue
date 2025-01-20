@@ -11,7 +11,7 @@
                 <ThemeToggle theme={theme} setTheme={setTheme} />
             </div>
             <div class="flex flex-col h-[calc(100%-5rem)] justify-between overflow-y-auto px-2">
-                <ChatList theme={theme} ref="ChatList" class="flex-1"/>
+                <ChatList :chats="chats" @select-chat="loadMessages" theme={theme} ref="ChatList" class="flex-1"/>
                 <div class="my-auto sticky bottom-0">
                     <button class="mt-4 flex items-center justify-center space-x-2 w-full px-4 py-2 rounded-lg text-secondary bg-primary hover:bg-blue-600 hover:text-primary ease-in-out transition-colors"
                             @click="addChatHandler">
@@ -20,7 +20,7 @@
                 </div>
             </div>
         </div>
-        <div class="flex-1 flex flex-col">
+        <div class="flex-1 flex flex-col" v-if="currentChatId">
             <div
                 class="flex justify-between items-center px-4 py-2 border-b color-primary border-secondary"
             >
@@ -69,8 +69,8 @@
     </div>
 </template>
 <script>
-import {ref} from "vue";
-import {useRouter} from 'vue-router';
+import {onMounted, ref, watch} from "vue";
+import { useRouter, useRoute } from 'vue-router';
 import ThemeToggle from "./ThemeToggle.vue";
 import ModelSelector from "./ModelSelector.vue";
 import ChatList from "./ChatList.vue";
@@ -95,12 +95,14 @@ export default {
     },
     setup() {
         const router = useRouter();
+        const route = useRoute();
         const isFileUploadVisible = ref(false);
         const isModelSettingsVisible = ref(false);
         const inputMessage = ref("");
         const messages = ref([]);
         const currentModel = ref("");
-        const ChatList = ref(null)
+        const currentChatId = ref(route.params.chatId || null);
+        const chats = ref([]);
 
         const closeModelSettings = () => {
             isModelSettingsVisible.value = false;
@@ -116,33 +118,73 @@ export default {
             currentModel.value = model;
         };
 
+        onMounted(async () => {
+            try {
+                const response = await axios.get('/api/chats');
+                chats.value = response.data;
+            } catch (error) {
+                console.error("Error loading chats:", error);
+            }
+        });
+
+        watch(
+            () => route.params.chatId,
+            (newChatId) => {
+                currentChatId.value = newChatId || null;
+                if (newChatId) {
+                    loadMessages(newChatId);
+                } else {
+                    messages.value = [];
+                }
+            },
+            { immediate: true }
+        );
+
+        const isSending = ref(false);
+
         const sendMessage = async () => {
-            if (!inputMessage.value.trim()) return;
+            if (!inputMessage.value.trim() || isSending.value) return;
+
+            isSending.value = true;
 
             // Добавляем сообщение пользователя
             messages.value.push({ role: "user", content: inputMessage.value });
             inputMessage.value = "";
 
             try {
-                // Отправляем запрос на сервер с использованием axios
                 const response = await axios.post('/api/chat', {
                     messages: messages.value,
-                    model: currentModel.value, // Используем выбранную модель
+                    model: currentModel.value,
+                    chatId: currentChatId.value
                 });
 
-                // Обрабатываем обычный JSON-ответ
                 const assistantMessage = response.data.message;
-
-                // Добавляем сообщение ассистента в массив messages
                 messages.value.push({ role: "assistant", content: assistantMessage });
             } catch (error) {
                 console.error("Error sending message:", error);
+            } finally {
+                isSending.value = false;
             }
         };
 
-        const addChatHandler = (event) => {
-            ChatList.value.createChatHandler();
-        }
+        const loadMessages = async (chatId) => {
+            try {
+                const response = await axios.get(`/api/chats/${chatId}/messages`);
+                messages.value = response.data;
+                currentChatId.value = chatId;
+            } catch (error) {
+                console.error("Error loading messages:", error);
+            }
+        };
+
+        const addChatHandler = async () => {
+            try {
+                const response = await axios.post('/api/createChat');
+                chats.value.push(response.data);
+            } catch (error) {
+                console.error("Error creating chat:", error);
+            }
+        };
 
         return {
             isFileUploadVisible,
@@ -155,7 +197,9 @@ export default {
             sendMessage,
             handleModelSelected,
             addChatHandler,
-            ChatList
+            loadMessages,
+            chats,
+            currentChatId
         };
     },
 };
