@@ -1,7 +1,7 @@
 <template>
     <button
     @click="toggleTheme"
-    class="p-2  text-gray-700 hover:bg-gray-200"
+    class="text-gray-900 hover:text-accent"
     >
         <component :is="currentIcon" size="20" />
     </button>

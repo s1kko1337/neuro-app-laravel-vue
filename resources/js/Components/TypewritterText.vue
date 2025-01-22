@@ -1,6 +1,6 @@
 <template>
     <h1
-        class="text-3xl md:text-4xl font-bold text-secondary"
+        class="text-3xl md:text-4xl font-bold text-gray-900"
     >
         {{ displayText }}
         <span class="animate-pulse">|</span>
