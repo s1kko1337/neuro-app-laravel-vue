@@ -140,7 +140,6 @@ class OllamaService
 //        ], 200);
 //    }
 
-//я затрахался с эмбендингами поэтому пока что простенькая версия
     public function chat(Request $request)
     {
         $messages = $request->input('messages');
