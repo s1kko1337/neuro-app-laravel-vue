@@ -6,7 +6,7 @@ COPY ./docker/php/php.ini-production $PHP_INI_DIR/php.ini
 
 COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/local/bin/
 
-RUN install-php-extensions @composer-2 opcache pdo_pgsql pgsql
+RUN install-php-extensions @composer-2 opcache gd pdo_pgsql pgsql
 
 ENV COMPOSER_ALLOW_SUPERUSER 1
 ENV COMPOSER_MEMORY_LIMIT -1

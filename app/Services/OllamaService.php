@@ -8,8 +8,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Models\Message;
 use App\Models\Embedding;
-
-
 class OllamaService
 {
     public function ask (Request $request){
@@ -146,6 +144,21 @@ class OllamaService
         $model = $request->input('model');
         $chatId = $request->input('chatId');
 
+        //Поиск контекстного сообщения с текстом файла
+        $chat = Chat::findOrFail($chatId);
+        $fileContextMessage = $chat->messages()
+            ->where('role', 'user')
+            ->whereNotNull('content')
+            ->first();
+
+        if ($fileContextMessage) {
+            array_unshift($messages, [
+                'role' => $fileContextMessage->role,
+                'content' => $fileContextMessage->content,
+            ]);
+        }
+        //Конец
+
         $lastUserMessage = null;
         foreach (array_reverse($messages) as $message) {
             if ($message['role'] === 'user') {
@@ -200,29 +213,7 @@ class OllamaService
         ], 200);
     }
 
-    public function getRelevantMessages($chatId, $query, $limit = 5)
-    {
-        $messageCount = Message::where('chat_id', $chatId)->count();
-
-        if ($messageCount === 0) {
-            return [];
-        }
-
-        $queryEmbedding = $this->generateEmbedding($query);
-
-        $relevantMessages = Message::where('chat_id', $chatId)
-            ->whereHas('embedding')
-            ->with(['embedding' => function ($query) use ($queryEmbedding) {
-                $query->orderByRaw('embedding <-> ?', [json_encode($queryEmbedding)]);
-            }])
-            ->limit($limit)
-            ->get();
-
-        return $relevantMessages;
-    }
-
-
-    private function generateEmbedding(string $text): array
+    public function generateEmbedding(string $text): array
     {
         $embeddings = Ollama::model('nomic-embed-text')->embeddings($text);
 

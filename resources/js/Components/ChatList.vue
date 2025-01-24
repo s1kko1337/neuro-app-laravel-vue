@@ -1,15 +1,17 @@
 <template>
-    <h2 class="text-sm font-semibold mb-4 text-gray-900">
-        Recent Chats
-    </h2>
-    <div class="space-y-2 h-[50vh] lg:h-[70vh] overflow-y-auto">
-        <div v-for="chat in chats" :key="chat.id">
-            <button @click="selectChat(chat.id)"
-                    :class="{'border border-accent': activeChatId === chat.id}"
-                    class="flex items-center space-x-2 w-full px-3 py-2 rounded-lg hover:bg-accent">
-                <MessageSquare size="18" />
-                <span class="truncate">{{ chat.id }}</span>
-            </button>
+    <div class="flex-1">
+        <h2 class="text-sm font-semibold mb-4 text-gray-900">
+            Recent Chats
+        </h2>
+        <div class="space-y-2 h-[50vh] lg:h-[70vh] overflow-y-auto">
+            <div v-for="chat in chats" :key="chat.id">
+                <button @click="selectChat(chat.id)"
+                        :class="{'border border-accent': activeChatId === chat.id}"
+                        class="flex items-center space-x-2 w-full px-3 py-2 rounded-lg hover:bg-accent">
+                    <MessageSquare size="18"/>
+                    <span class="truncate">{{ chat.id }}</span>
+                </button>
+            </div>
         </div>
     </div>
 </template>
@@ -29,8 +31,13 @@ export default {
         activeChatId: {
             type: [String, Number],
             default: null
+        },
+        theme: {
+            type: String,
+            required: true
         }
     },
+    emits: ['select-chat', 'close-menu'],
     setup(props, { emit }) {
         const activeChatId = ref(null);
         const selectChat = (chatId) => {

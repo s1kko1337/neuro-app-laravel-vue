@@ -48,7 +48,7 @@
                                 @close-menu="toggleMenu"
                                 theme={theme}
                                 ref="ChatList"
-                                class="flex-1"
+                                class="max-h-fit"
                             />
                             <div class="my-auto sticky bottom-0">
                                 <button
@@ -86,7 +86,7 @@
                                 <Upload size="20"
                                 />
                             </button>
-                            <FileUpload v-if="isFileUploadVisible" :on-close="closeFileUpload"/>
+                            <FileUpload v-if="isFileUploadVisible" :on-close="closeFileUpload" :currentChatId="currentChatId"/>
                                 <button @click="isModelSettingsVisible = true"
                                         class="p-2 rounded-lg hover:bg-primary hover:text-accent">
                                     <Settings size="20"
