@@ -17,7 +17,6 @@ get-pwd:
 	echo $(PWD)
 
 docker-up:
-	@sudo chmod -R 777 .
 	@docker-compose -p ${INDEX} up -d
 
 docker-down:
@@ -27,7 +26,7 @@ docker-build: \
 	docker-build-app-php-cli \
 	docker-build-app-php-fpm \
 	docker-build-app-nginx \
-	docker-build-app-nodejs
+	docker-build-app-nodejs \
 
 docker-build-app-nginx:
 	@docker build --target=nginx \
@@ -74,5 +73,3 @@ node:
 
 ollama:
 	@docker exec -it ollama /bin/bash
-
-# docker exec -it ollama /bin/bash
