@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Chat;
+use App\Models\Message;
 use App\Services\OllamaService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -27,9 +29,26 @@ class ChatController extends Controller
     public function send(Request $request)
     {
         $request->validate([
-            'messages' => 'required|array', // Массив сообщений
+            'messages' => 'required|array',
         ]);
 
         return $this->ollamaService->chat($request);
+    }
+    public function getChats()
+    {
+        $chats = Chat::with('messages')->get();
+        return response()->json($chats);
+    }
+
+    public function addChat()
+    {
+        $chat = Chat::create();
+        return response()->json($chat);
+    }
+
+    public function getChatMessages($chatId)
+    {
+        $messages = Message::where('chat_id', $chatId)->get();
+        return response()->json($messages);
     }
 }

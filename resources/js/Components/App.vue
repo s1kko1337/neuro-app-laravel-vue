@@ -1,13 +1,13 @@
 <template>
     <div class="w-full min-h-screen bg-primary flex flex-col">
-        <div :class="[currentRouter === '/chat' ? 'hidden' : '']">
+        <div :class="[currentRouter !== '/' && currentRouter !== '/about' && currentRouter !== '/contact' ? 'hidden' : '']">
         <Navbar/>
         </div>
         <div :class="['flex flex-1 items-center justify-center', currentRouter !== '/' ? 'hidden' : '']">
 
             <div class="max-w-2xl text-center space-y-8 p-6">
                     <TypewritterText text="Welcome to AI Chat Assistant" :speed="100"></TypewritterText>
-                    <p class="text-xl text-secondary">
+                    <p class="text-xl text-gray-900">
                         Your intelligent conversation partner powered by advanced AI
                     </p>
                     <router-link to="/chat">
@@ -58,8 +58,6 @@ export default {
 
             try {
                 const currentRoutePath = router.currentRoute.value.path;
-
-                // Обновленное условие перенаправления
                 const authRoutes = ['/', '/login'];
                 const shouldRedirect = authRoutes.includes(currentRoutePath) && lastVisitedRoute;
 
@@ -71,11 +69,8 @@ export default {
                     }
                 }
             } catch (error) {
-                // Обработка ошибок остается без изменений
                 if (error.response) {
-
                 } else {
-
                 }
             }
         });

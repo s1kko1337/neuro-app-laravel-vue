@@ -1,6 +1,6 @@
 <template>
     <select
-        class="w-48 p-2 rounded-lg border bg-secondary border-secondary text-primary"
+        class="w-48 p-2 rounded-lg border bg-accent border-secondary text-gray-900"
         @change="selectModelHandler"
     >
         <option
