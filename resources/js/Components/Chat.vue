@@ -1,9 +1,9 @@
 <template>
     <div class="flex flex-col items-center justify-center">
         <div class="w-full min-h-screen bg-primary">
-            <div class="flex w-full h-screen">
+            <div class="flex w-full h-full">
                 <!--Desktop menu -->
-                <div class="hidden lg:block w-64 border rounded-3xl m-4 p-4 bg-secondary border-accent">
+                <div class="hidden lg:flex w-64 border rounded-3xl m-4 p-4 bg-secondary border-accent">
                     <div class="flex items-center justify-between mb-8">
                         <button class="text-xl font-semibold color-primary hover:text-accent"
                                 @click="exitHandler">
@@ -11,14 +11,14 @@
                         </button>
                         <ThemeToggle theme={theme} setTheme={setTheme} />
                     </div>
-                    <div class="flex flex-col min-h-sc  justify-between overflow-y-auto px-2">
+                    <div class="flex flex-col h-full justify-between overflow-y-auto px-2">
                         <ChatList :chats="chats" @select-chat="loadMessages" theme={theme} ref="ChatList"
                                   class="flex-1"/>
-                        <div class="my-auto">
+                        <div class="mt-auto sticky bottom-0">
                             <button
                                 class="mt-4 flex items-center justify-center space-x-2 w-full px-4 py-2 rounded-lg text-gray-900 bg-accent hover:bg-blue-600"
                                 @click="addChatHandler">
-                                <span>New Chat</span>
+                                <span>New chat</span>
                             </button>
                         </div>
                     </div>
@@ -54,7 +54,7 @@
                                 <button
                                     class="mt-4 flex items-center justify-center space-x-2 w-full px-4 py-2 rounded-lg text-gray-900 bg-accent hover:bg-blue-600 hover:text-primary"
                                     @click="addChatHandler">
-                                    <span>New Chat</span>
+                                    <span>New chat</span>
                                 </button>
                             </div>
                         </div>
