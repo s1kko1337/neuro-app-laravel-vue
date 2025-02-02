@@ -3,7 +3,7 @@
         <h2 class="text-sm font-semibold mb-4 text-gray-900">
             Recent Chats
         </h2>
-        <div class="space-y-2 h-[50vh] lg:h-[70vh] overflow-y-auto">
+        <div class="space-y-2 h-full overflow-y-auto">
             <div v-for="chat in chats" :key="chat.id">
                 <button @click="selectChat(chat.id)"
                         :class="{'border border-accent': activeChatId === chat.id}"
