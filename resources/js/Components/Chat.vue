@@ -9,11 +9,11 @@
                                 @click="exitHandler">
                             Home
                         </button>
-                        <ThemeToggle :theme="theme" :setTheme="setTheme" />
+                        <ThemeToggle theme="theme" setTheme="setTheme" />
                     </div>
                     <div class="flex flex-col flex-1 justify-between overflow-hidden">
                         <div class="overflow-y-auto flex-1">
-                            <ChatList :chats="chats" @select-chat="loadMessages" :theme="theme" ref="ChatList" />
+                            <ChatList :chats="chats" @select-chat="loadMessages" theme="theme" ref="ChatList" />
                         </div>
                         <div class="mt-4">
                             <button
@@ -40,7 +40,7 @@
                                 <button class="text-xl font-semibold color-primary hover:bg-primary" @click="exitHandler">
                                     Home
                                 </button>
-                                <ThemeToggle :theme="theme" :setTheme="setTheme" />
+                                <ThemeToggle theme="theme" setTheme="setTheme" />
                             </div>
                             <div class="overflow-y-auto flex-1">
                                 <ChatList
@@ -48,7 +48,7 @@
                                     :activeChatId="currentChatId"
                                     @select-chat="loadMessages"
                                     @close-menu="toggleMenu"
-                                    :theme="theme"
+                                    theme="theme"
                                     ref="ChatList"
                                 />
                             </div>
@@ -84,12 +84,12 @@
                     <div class="p-4 border bg-secondary rounded-3xl border-accent" v-if="currentChatId" >
                         <div class="flex items-center space-x-2">
                             <div>
-                            <button @click="isFileUploadVisible = true"
-                                    class="p-2 rounded-lg hover:bg-primary hover:text-accent">
-                                <Upload size="20"
-                                />
-                            </button>
-                            <FileUpload v-if="isFileUploadVisible" :on-close="closeFileUpload" :currentChatId="currentChatId"/>
+                                <button @click="isFileUploadVisible = true"
+                                        class="p-2 rounded-lg hover:bg-primary hover:text-accent">
+                                    <Upload size="20"
+                                    />
+                                </button>
+                                <FileUpload v-if="isFileUploadVisible" :on-close="closeFileUpload" :currentChatId="currentChatId"/>
                                 <button @click="isModelSettingsVisible = true"
                                         class="p-2 rounded-lg hover:bg-primary hover:text-accent">
                                     <Settings size="20"
