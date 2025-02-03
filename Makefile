@@ -27,7 +27,7 @@ docker-build: \
 	docker-build-app-php-cli \
 	docker-build-app-php-fpm \
 	docker-build-app-nginx \
-	docker-build-app-nodejs
+	docker-build-app-nodejs \
 
 docker-build-app-nginx:
 	@docker build --target=nginx \
@@ -70,9 +70,7 @@ watch:
 	@docker-compose run --rm app-nodejs npm run dev
 
 node:
-	@docker-compose exec app-nodejs /bin/sh
+	@docker-compose exec ${INDEX}-app-nodejs /bin/sh
 
 ollama:
 	@docker exec -it ollama /bin/bash
-
-# docker exec -it ollama /bin/bash
