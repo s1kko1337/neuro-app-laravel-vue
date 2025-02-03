@@ -83,8 +83,6 @@ class OllamaService
         $messages = $request->input('messages');
         $model = $request->input('model');
         $chatId = $request->input('chatId');
-
-        // Поиск контекстного сообщения с текстом файла
         $chat = Chat::findOrFail($chatId);
 
         $lastUserMessage = $this->getLastUserMessage($messages);
@@ -95,22 +93,18 @@ class OllamaService
             ], 400);
         }
 
-        // Разделяем текст запроса на чанки
         $userMessageChunks = $this->splitTextIntoChunks($lastUserMessage['content']);
 
-        // Генерируем эмбеддинги для каждого чанка запроса
         $userMessageEmbeddings = [];
         foreach ($userMessageChunks as $chunk) {
             $userMessageEmbeddings[] = $this->generateEmbedding($chunk);
         }
 
-        // Ищем релевантные чанки на основе всех эмбеддингов
         $context = $this->getRelevantContext($chatId, $userMessageEmbeddings);
         Log::info('Context:', [
             json_encode($context)
         ]);
 
-        // Формируем контекстный промпт
         $systemMessage = [
             'role' => 'system',
             'content' => "Context:\n" . $context
@@ -139,10 +133,8 @@ class OllamaService
 
         $assistantMessage = $response['message']['content'] ?? $response['message'];
 
-        // Разделяем текст ответа на чанки
         $assistantMessageChunks = $this->splitTextIntoChunks($assistantMessage);
 
-        // Генерируем эмбеддинги для каждого чанка ответа
         $assistantMessageEmbeddings = [];
         foreach ($assistantMessageChunks as $chunk) {
             $assistantMessageEmbeddings[] = $this->generateEmbedding($chunk);
@@ -151,7 +143,6 @@ class OllamaService
         DB::transaction(function () use ($lastUserMessage, $assistantMessage, $model, $chatId, $userMessageEmbeddings, $assistantMessageEmbeddings, $systemMessage) {
             $chat = Chat::findOrFail($chatId);
 
-            // Сохраняем сообщение пользователя и его эмбеддинги
             $lastUserMessageModel = $chat->messages()->create([
                 'role' => $lastUserMessage['role'],
                 'content' => $lastUserMessage['content'],
@@ -163,13 +154,11 @@ class OllamaService
                 ]);
             }
 
-            // Сохраняем системное сообщение
             $systemMessageModel = $chat->messages()->create([
                 'role' => $systemMessage['role'],
                 'content' => $systemMessage['content'],
             ]);
 
-            // Сохраняем сообщение ассистента и его эмбеддинги
             $assistantMessageModel = $chat->messages()->create([
                 'role' => 'assistant',
                 'content' => $assistantMessage,
@@ -212,7 +201,6 @@ class OllamaService
         try {
             $relevantMessages = collect();
 
-            // Для каждого эмбеддинга ищем релевантные чанки
             foreach ($embeddings as $embedding) {
                 $results = Embedding::query()
                     ->select('messages.content')
@@ -226,7 +214,6 @@ class OllamaService
                 $relevantMessages = $relevantMessages->merge($results);
             }
 
-            // Убираем дубликаты и объединяем контекст
             $uniqueMessages = $relevantMessages->unique('content');
 
             Log::info('Relevant context found:', [
@@ -241,7 +228,7 @@ class OllamaService
                 'error' => $e->getMessage(),
                 'chat_id' => $chatId
             ]);
-            return ''; // Возвращаем пустую строку в случае ошибки
+            return '';
         }
     }
 
