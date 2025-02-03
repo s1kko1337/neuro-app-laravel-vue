@@ -21,7 +21,7 @@ export default {
         isAi: {
             type: Boolean,
             required: true,
-        },
+        }
     },
     setup(props) {
         return {

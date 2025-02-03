@@ -7,6 +7,7 @@ use App\Models\UploadedFile;
 use App\Models\Chat;
 use App\Models\Message;
 use App\Services\OllamaService;
+use Illuminate\Support\Facades\Log;
 use PhpOffice\PhpWord\IOFactory;
 use Smalot\PdfParser\Parser as PdfParser;
 
@@ -24,40 +25,43 @@ class GenerateContextController extends Controller
         try {
             $request->validate([
                 'file_ids' => 'required|array',
-                'chat_id' => 'required|exists:chats,id', // Проверяем, что chat_id существует
+                'chat_id' => 'required|exists:chats,id',
             ]);
 
             $fileIds = $request->input('file_ids');
             $chatId = $request->input('chat_id');
-            $text = '';
+            $chunks = [];
+            $chat = Chat::findOrFail($chatId);
+            $totalChunks = 0;
 
             foreach ($fileIds as $fileId) {
                 $uploadedFile = UploadedFile::findOrFail($fileId);
                 $filePath = storage_path('app/' . $uploadedFile->path);
-                $text .= $this->generateTextFromDoc($filePath) . "\n";
+                $text = $this->generateTextFromDoc($filePath);
+
+                $fileChunks = $this->ollamaService->splitTextIntoChunks($text);
+                $totalChunks += count($fileChunks);
+
+                foreach ($fileChunks as $chunk) {
+                    $message = $chat->messages()->create([
+                        'role' => 'system',
+                        'content' => $chunk,
+                    ]);
+
+                    $embedding = $this->ollamaService->generateEmbedding($chunk);
+                    $message->embedding()->create([
+                        'embedding' => $embedding,
+                    ]);
+                }
             }
-
-            // Находим существующий чат
-            $chat = Chat::findOrFail($chatId);
-
-            // Создаем сообщение с контекстом файла
-            $message = $chat->messages()->create([
-                'role' => 'user',
-                'content' => $text,
-            ]);
-
-            // Генерируем embedding для сообщения
-            $embedding = $this->ollamaService->generateEmbedding($text);
-            $message->embedding()->create([
-                'embedding' => $embedding,
-            ]);
 
             return response()->json([
                 'message' => 'Контекст успешно сгенерирован',
                 'chat_id' => $chat->id,
+                'chunks_count' => $totalChunks
             ]);
         } catch (\Exception $e) {
-            \Log::error('Generate context error: ' . $e->getMessage());
+            Log::error('Generate context error: ' . $e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
