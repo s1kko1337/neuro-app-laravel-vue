@@ -75,7 +75,7 @@
                     </div>
                     <div class="flex-1 overflow-y-auto p-4">
                         <ChatMessage
-                            v-for="(msg, index) in messages"
+                            v-for="(msg, index) in filteredMessages"
                             :key="index"
                             :message="msg.content"
                             :isAi="msg.role === 'assistant'"
@@ -259,6 +259,11 @@ export default {
             toggleMenu,
             isMenuOpen
         };
+    },
+    computed: {
+        filteredMessages() {
+            return this.messages.filter(msg => ['user', 'assistant'].includes(msg.role));
+        }
     },
 };
 </script>
