@@ -30,8 +30,8 @@
             <div v-if="uploadedFiles.length > 0" class="mt-4">
                 <h3 class="text-lg font-semibold text-gray-900">Uploaded Files</h3>
                 <ul>
-                    <li v-for="file in uploadedFiles" :key="file.id" class="text-accent">
-                        {{ file.original_name }}
+                    <li v-for="file in uploadedFiles" :key="file.id" class="text-accent ml-4 space-y-2">
+                        <a :href="file.url" target="_blank">{{ file.name }}</a>
                     </li>
                 </ul>
                 <button @click="generateContext" class="mt-4 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600">
@@ -82,11 +82,21 @@ export default {
                 try {
                     const response = await axios.post('/api/upload', formData, {
                         headers: {
-                            'Content-Type': 'multipart/form-data'
-                        }
+                            'Content-Type': 'multipart/form-data',
+                        },
                     });
-                    uploadedFiles.value.push(response.data);
-                    console.log('File uploaded successfully:', response.data);
+                    const fileId = response.data.file_id;
+                    const filePreviewResponse = await axios.get(`/files/${fileId}/preview`, {
+                        responseType: 'blob',
+                    });
+                    const fileURL = URL.createObjectURL(filePreviewResponse.data);
+
+                    // Store the response and file URL in uploadedFiles
+                    uploadedFiles.value.push({
+                        id: fileId,
+                        url: fileURL,
+                        name: response.data.original_name,
+                    });
                 } catch (error) {
                     console.error('Error uploading file:', error);
                 }
@@ -94,7 +104,7 @@ export default {
         };
 
         const generateContext = async () => {
-            const fileIds = uploadedFiles.value.map(file => file.file_id);
+            const fileIds = uploadedFiles.value.map(file => file.id);
             try {
                 const response = await axios.post('/api/generate-context', {
                     file_ids: fileIds,
