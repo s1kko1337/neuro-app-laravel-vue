@@ -8,8 +8,8 @@ COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr
 
 RUN install-php-extensions @composer-2 opcache gd pdo_pgsql pgsql
 
-ENV COMPOSER_ALLOW_SUPERUSER 1
-ENV COMPOSER_MEMORY_LIMIT -1
+ENV COMPOSER_ALLOW_SUPERUSER=1
+ENV COMPOSER_MEMORY_LIMIT=-1
 
 RUN apk --no-cache add bash
 
@@ -57,7 +57,7 @@ RUN echo "upstream php-upstream { server ${PHP_UPSTREAM_CONTAINER}:${PHP_UPSTREA
 EXPOSE 80
 
 
-# NodeJS
+#NodeJS
 FROM node:lts-alpine3.20 AS nodejs
 
 ARG UID
@@ -82,4 +82,4 @@ USER node
 
 RUN npm install
 EXPOSE 5173
-CMD ["npm", "run", "dev"]
+CMD ["npm", "run", "build"]
