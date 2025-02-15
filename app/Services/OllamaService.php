@@ -8,25 +8,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Models\Message;
 use App\Models\Embedding;
+
 class OllamaService
 {
-    public function ask (Request $request){
-        $options = [
-            'temperature' => floatval(config('ollama-laravel.temperature'))
-        ];
-
-        $response = Ollama::agent($request->role_discription)
-            ->prompt($request->question.' '.'Respond in Json')
-            ->model(config('ollama-laravel.model'))
-            ->options($options)
-            ->format('json')
-            ->stream(false)
-            ->ask();
-
-        return response()->json($response,200);
-
-    }
-
     public function getModels (){
         try {
             $responseModelsInfo = Ollama::models();
@@ -84,8 +68,10 @@ class OllamaService
         $model = $request->input('model');
         $chatId = $request->input('chatId');
         $chat = Chat::findOrFail($chatId);
+        $response = 0;
 
         $lastUserMessage = $this->getLastUserMessage($messages);
+        $lastUserMessageText = $lastUserMessage['content'];
 
         if (!$lastUserMessage) {
             return response()->json([
@@ -105,24 +91,59 @@ class OllamaService
             json_encode($context)
         ]);
 
-        $systemMessage = [
-            'role' => 'system',
-            'content' => "Context:\n" . $context
-        ];
-
-        array_unshift($messages, $systemMessage);
-
-        Log::info('Request data:', [
-            'messages' => $messages,
-            'model' => $model,
-            'chatId' => $chatId
-        ]);
-
-        $response = Ollama::agent('You know all as well!')
+        if (preg_match('/^deepseek-r1/', $model)) {
+            $systemMessage = [
+                'role' => 'system',
+                'content' => "Всегда отвечай на русском языке, вот необходимый контекст для твоего ответа. Контекст:\n" . $context .".\n. Если ты не умеешь думать на русском языке, думай на другом языке но отвечай на русском.Свой ответ давай на русском языке! Свой ответ переведи на русский."
+            ];
+    
+            array_unshift($messages, $systemMessage);
+    
+            Log::info('Request data:', [
+                'messages' => $messages,
+                'model' => $model,
+                'chatId' => $chatId
+            ]);
+    
+            $response = Ollama::agent('Ты отвечаешь только по-русски! Если вопрос задан не на русском языке, все равно отвечай на русском!')
+                ->model($model)
+                ->chat($messages);
+    
+            Log::info('Ollama response:', $response);
+        } else {
+            $helperMessage = Ollama::agent('Ты эксперт в русском языке.')
+            ->prompt("Всегда отвечай на русском языке, вот необходимый контекст для твоего ответа. Вопрос: $lastUserMessageText \n
+            Контекст:\n" . $context .".\n Задай 5 вопросов на русском языке, уточняющих вопрос пользователя и
+            учитывающих переданный контекст, на базе этих вопросов строй свой ответ. 
+            В ответ давай только уточняющие вопросы на русском языке!")
             ->model($model)
-            ->chat($messages);
+            ->stream(false)
+            ->ask();
 
-        Log::info('Ollama response:', $response);
+            $helperResponse =  $helperMessage['response'];
+
+            $systemMessage = [
+                'role' => 'system',
+                'content' => "Всегда отвечай на русском языке. 
+                На базе этих вопросов и уточнений:(\n" . $helperResponse ."),\n составь свой точный ответ на заданный вопрос пользователя, в формате связанного текста, а не прямых ответов на вопросы. Вопрос пользователя: $lastUserMessageText. 
+                Свой ответ давай на русском языке! Свой ответ переведи на русский."
+            ];
+
+            array_unshift($messages, $systemMessage);
+
+            Log::info('Request data:', [
+                'messages' => $messages,
+                'model' => $model,
+                'chatId' => $chatId
+            ]);
+
+            $response = Ollama::agent('На базе вопросов подсказок и контекста ты отвечаешь на вопрос пользователя на русском языке!')
+                ->model($model)
+                ->chat($messages);
+
+            Log::info('Ollama response:', $response);
+        }
+
 
         if (!isset($response['message'])) {
             Log::error('Ollama response does not contain "message" key:', $response);
