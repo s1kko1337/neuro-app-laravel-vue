@@ -45,9 +45,6 @@ docker-build-app-nodejs:
 	@docker build --target=nodejs \
 	-t ${REGISTRY}/${INDEX}-nodejs:${IMAGE_TAG} -f ./docker/Dockerfile .
 
-docker-build-app-python:
-	@docker-compose -p ${INDEX} build python
-
 docker-logs:
 	@docker-compose -p ${INDEX} logs -f
 
