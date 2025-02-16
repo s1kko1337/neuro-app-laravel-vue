@@ -60,25 +60,14 @@ EXPOSE 80
 #NodeJS
 FROM node:lts-alpine3.20 AS nodejs
 
-ARG UID
-ARG GID
-
 USER root
 
-RUN if [ $(id -u node) -ne ${UID} ]; then groupmod -g ${GID} node && usermod -u ${UID} node; fi
-
-USER node
 
 WORKDIR /app
 
 COPY package*.json ./
 COPY vite.config.js ./
 COPY . .
-# Меняем владельца директории /app на пользователя node
-RUN chown -R node:node /app
-
-# Переключаемся на пользователя node
-USER node
 
 RUN npm install
 EXPOSE 5173

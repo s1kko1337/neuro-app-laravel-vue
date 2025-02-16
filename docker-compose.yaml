@@ -7,12 +7,16 @@ services:
     image: ${REGISTRY}/${INDEX}-php-fpm:${IMAGE_TAG}
     volumes:
       - ./:/var/www/html
+    networks:
+      - app-network
 
   php-cli:
     image: ${REGISTRY}/${INDEX}-php-cli:${IMAGE_TAG}
     volumes:
       - ./:/app
     command: php artisan config:clear && php artisan cache:clear
+    networks:
+      - app-network
 
   nginx:
     image: ${REGISTRY}/${INDEX}-nginx:${IMAGE_TAG}
@@ -25,6 +29,8 @@ services:
       - nodejs
     environment:
       - NGINX_CACHE_CONTROL="no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
+    networks:
+      - app-network
 
   nodejs:
     build:
@@ -36,6 +42,8 @@ services:
     volumes:
       - ./:/app
     command: "npm run dev"
+    networks:
+      - app-network
 
   ollama:
     image: ollama/ollama:latest
@@ -56,7 +64,9 @@ services:
       resources:
         reservations:
           devices:
-            - capabilities: [gpu]  
+            - capabilities: [gpu]
+    networks:
+      - app-network
 
 
   postgres:
@@ -71,6 +81,30 @@ services:
       - PGDATA=/var/lib/postgresql/data/pgdata
     ports:
       - 54321:5432
+    networks:
+      - app-network
+
+  python:
+    build:
+      context: ./python
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./python:/usr/src/app
+      - ./python/venv:/usr/src/app/venv
+    entrypoint: [ "./venv/bin/uvicorn" ]
+    command: [ "app:app", "--host", "0.0.0.0", "--port", "8000", "--reload" ]
+    environment:
+      - FASTAPI_APP=app:app
+      - ENV=development
+    networks:
+      - app-network
+
 
 volumes:
   pgsql:
+
+networks:
+  app-network:
+    driver: bridge

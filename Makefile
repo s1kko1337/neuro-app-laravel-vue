@@ -27,6 +27,7 @@ docker-build: \
 	docker-build-app-php-fpm \
 	docker-build-app-nginx \
 	docker-build-app-nodejs \
+	docker-build-app-python \
 
 docker-build-app-nginx:
 	@docker build --target=nginx \
@@ -43,6 +44,9 @@ docker-build-app-php-cli:
 docker-build-app-nodejs:
 	@docker build --target=nodejs \
 	-t ${REGISTRY}/${INDEX}-nodejs:${IMAGE_TAG} -f ./docker/Dockerfile .
+
+docker-build-app-python:
+	@docker-compose -p ${INDEX} build python
 
 docker-logs:
 	@docker-compose -p ${INDEX} logs -f
