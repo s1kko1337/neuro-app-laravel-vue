@@ -70,7 +70,7 @@
                             <Menu size="20" />
                         </button>
                     </div>
-                    <div class="flex-1 overflow-y-auto p-4">
+                    <div class="flex-1 overflow-y-auto p-4 max-w-70">
                         <ChatMessage
                             v-for="(msg, index) in filteredMessages"
                             :key="index"
@@ -92,7 +92,11 @@
                                     <Settings size="20"
                                     />
                                 </button>
-                                <ModelSettings v-if="isModelSettingsVisible" :on-close="closeModelSettings"/>
+                                <ModelSettings 
+                                  v-if="isModelSettingsVisible" 
+                                  :on-close="closeModelSettings"
+                                  v-model:temperature="temperature"
+                                />
                             </div>
                             <input
                                 type="text"
@@ -150,6 +154,11 @@ export default {
         const chats = ref([]);
         const isMenuOpen = ref(false);
         const isSending = ref(false);
+        const temperature = ref(localStorage.getItem('temperature') / 100 || 0.8);
+
+        const handleTemperatureUpdate = (newTemperature) => {
+            temperature.value = newTemperature;
+        };
 
         const closeModelSettings = () => {
             isModelSettingsVisible.value = false;
@@ -202,7 +211,8 @@ export default {
                 const response = await axios.post('/api/chat', {
                     messages: messages.value,
                     model: currentModel.value,
-                    chatId: currentChatId.value
+                    chatId: currentChatId.value,
+                    temperature: temperature.value
                 });
 
                 const assistantMessage = response.data.message;
@@ -254,7 +264,8 @@ export default {
             chats,
             currentChatId,
             toggleMenu,
-            isMenuOpen
+            isMenuOpen,
+            handleTemperatureUpdate
         };
     },
     computed: {

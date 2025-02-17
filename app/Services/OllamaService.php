@@ -66,6 +66,7 @@ class OllamaService
     {
         $messages = $request->input('messages');
         $model = $request->input('model');
+        $temperature = $request->input('temperature');
         $chatId = $request->input('chatId');
         $chat = Chat::findOrFail($chatId);
         $response = 0;
@@ -102,7 +103,8 @@ class OllamaService
             Log::info('Request data:', [
                 'messages' => $messages,
                 'model' => $model,
-                'chatId' => $chatId
+                'chatId' => $chatId,
+                'temperature' => $temperature
             ]);
     
             $response = Ollama::agent('Ты отвечаешь только по-русски! Если вопрос задан не на русском языке, все равно отвечай на русском!')
@@ -139,6 +141,7 @@ class OllamaService
 
             $response = Ollama::agent('На базе вопросов подсказок и контекста ты отвечаешь на вопрос пользователя на русском языке!')
                 ->model($model)
+                ->options(['temperature' => $temperature])
                 ->chat($messages);
 
             Log::info('Ollama response:', $response);
