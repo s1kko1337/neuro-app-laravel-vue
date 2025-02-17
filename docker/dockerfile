@@ -36,6 +36,8 @@ COPY --from=cli /app /var/www/html
 
 WORKDIR /var/www/html
 
+USER 1000
+
 CMD php-fpm
 EXPOSE 9000
 
