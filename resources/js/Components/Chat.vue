@@ -3,22 +3,24 @@
         <div class="w-full min-h-screen bg-primary">
             <div class="flex w-full h-screen">
                 <!--Desktop menu -->
-                <div class="hidden lg:block w-64 border rounded-3xl m-4 p-4 bg-secondary border-accent">
+                <div class="hidden lg:flex flex-col w-64 border rounded-3xl m-4 p-4 bg-secondary border-accent h-full">
                     <div class="flex items-center justify-between mb-8">
                         <button class="text-xl font-semibold color-primary hover:text-accent"
                                 @click="exitHandler">
                             Home
                         </button>
-                        <ThemeToggle theme={theme} setTheme={setTheme} />
+                        <ThemeToggle theme="theme" setTheme="setTheme" />
                     </div>
-                    <div class="flex flex-col min-h-sc  justify-between overflow-y-auto px-2">
-                        <ChatList :chats="chats" @select-chat="loadMessages" theme={theme} ref="ChatList"
-                                  class="flex-1"/>
-                        <div class="my-auto">
+                    <div class="flex flex-col flex-1 justify-between overflow-hidden">
+                        <div class="overflow-y-auto flex-1">
+                            <ChatList :chats="chats" @select-chat="loadMessages" theme="theme" ref="ChatList" />
+                        </div>
+                        <div class="mt-4">
                             <button
-                                class="mt-4 flex items-center justify-center space-x-2 w-full px-4 py-2 rounded-lg text-gray-900 bg-accent hover:bg-blue-600"
-                                @click="addChatHandler">
-                                <span>New Chat</span>
+                                class="flex items-center justify-center space-x-2 w-full px-4 py-2 rounded-lg text-gray-900 bg-accent hover:bg-blue-600"
+                                @click="addChatHandler"
+                            >
+                                <span>New chat</span>
                             </button>
                         </div>
                     </div>
@@ -26,42 +28,43 @@
                 <!--Mobile menu -->
                 <div v-if="isMenuOpen" class="fixed inset-0 z-50 flex">
                     <div class="fixed inset-0 bg-black bg-opacity-50" @click="toggleMenu"></div>
-                    <div class="relative z-50 w-64 bg-secondary">
+                    <div class="relative z-50 w-64 bg-secondary flex flex-col h-full">
                         <div class="flex items-center justify-between p-4 border-b border-primary">
                             <span class="text-xl font-semibold color-primary">Menu</span>
                             <button @click="toggleMenu" class="p-2">
                                 <span class="text-gray-900">✕</span>
                             </button>
                         </div>
-                        <div class="flex flex-col h-full justify-between overflow-y-auto p-4">
+                        <div class="flex flex-col flex-1 justify-between overflow-y-auto p-4">
                             <div class="flex flex-row justify-between mb-2">
-                                <button class="text-xl font-semibold color-primary hover:bg-primary"
-                                        @click="exitHandler">
+                                <button class="text-xl font-semibold color-primary hover:bg-primary" @click="exitHandler">
                                     Home
                                 </button>
-                                <ThemeToggle theme={theme} setTheme={setTheme} />
+                                <ThemeToggle theme="theme" setTheme="setTheme" />
                             </div>
-                            <ChatList
-                                :chats="chats"
-                                :activeChatId="currentChatId"
-                                @select-chat="loadMessages"
-                                @close-menu="toggleMenu"
-                                theme={theme}
-                                ref="ChatList"
-                                class="max-h-fit"
-                            />
-                            <div class="my-auto sticky bottom-0">
+                            <div class="overflow-y-auto flex-1">
+                                <ChatList
+                                    :chats="chats"
+                                    :activeChatId="currentChatId"
+                                    @select-chat="loadMessages"
+                                    @close-menu="toggleMenu"
+                                    theme="theme"
+                                    ref="ChatList"
+                                />
+                            </div>
+                            <div class="mt-4">
                                 <button
-                                    class="mt-4 flex items-center justify-center space-x-2 w-full px-4 py-2 rounded-lg text-gray-900 bg-accent hover:bg-blue-600 hover:text-primary"
-                                    @click="addChatHandler">
-                                    <span>New Chat</span>
+                                    class="flex items-center justify-center space-x-2 w-full px-4 py-2 rounded-lg text-gray-900 bg-accent hover:bg-blue-600 hover:text-primary"
+                                    @click="addChatHandler"
+                                >
+                                    <span>New chat</span>
                                 </button>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="flex-1 flex flex-col border rounded-3xl m-4 p-4 border-accent" v-if="currentChatId">
+                <div class="flex-1 h-full flex flex-col border rounded-3xl m-4 p-4 border-accent" v-if="currentChatId">
                     <div
                         class="flex justify-between items-center px-4 py-2 color-primary "
                     >
@@ -81,12 +84,12 @@
                     <div class="p-4 border bg-secondary rounded-3xl border-accent" v-if="currentChatId" >
                         <div class="flex items-center space-x-2">
                             <div>
-                            <button @click="isFileUploadVisible = true"
-                                    class="p-2 rounded-lg hover:bg-primary hover:text-accent">
-                                <Upload size="20"
-                                />
-                            </button>
-                            <FileUpload v-if="isFileUploadVisible" :on-close="closeFileUpload" :currentChatId="currentChatId"/>
+                                <button @click="isFileUploadVisible = true"
+                                        class="p-2 rounded-lg hover:bg-primary hover:text-accent">
+                                    <Upload size="20"
+                                    />
+                                </button>
+                                <FileUpload v-if="isFileUploadVisible" :on-close="closeFileUpload" :currentChatId="currentChatId"/>
                                 <button @click="isModelSettingsVisible = true"
                                         class="p-2 rounded-lg hover:bg-primary hover:text-accent">
                                     <Settings size="20"

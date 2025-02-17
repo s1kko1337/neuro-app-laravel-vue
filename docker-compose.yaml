@@ -1,41 +1,69 @@
 services:
   php-fpm:
-    image: ${REGISTRY}/${INDEX}-php-fpm:${IMAGE_TAG}
+    build:
+      context: .
+      dockerfile: ./docker/dockerfile
+      target: fpm
+    container_name: php-fpm
     volumes:
       - ./:/var/www/html
+    networks:
+      - app-network
 
   php-cli:
-    image: ${REGISTRY}/${INDEX}-php-cli:${IMAGE_TAG}
+    build:
+      context: .
+      dockerfile: ./docker/dockerfile
+      target: cli
+    container_name: php-cli
     volumes:
       - ./:/app
     command: php artisan config:clear && php artisan cache:clear
+    networks:
+      - app-network
 
   nginx:
-    image: ${REGISTRY}/${INDEX}-nginx:${IMAGE_TAG}
+    build:
+      context: .
+      dockerfile: ./docker/dockerfile
+      target: nginx
+    container_name: nginx
     ports:
       - ${APP_WEB_PORT}:80
       - 6001:6001
     volumes:
       - ./:/var/www/html
+    depends_on:
+      - nodejs
+    env_file:
+      - path: .env
+    environment:
+      - NGINX_CACHE_CONTROL="no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
+    networks:
+      - app-network
 
-  app-nodejs:
+  nodejs:
     build:
       context: .
       dockerfile: ./docker/Dockerfile
+      target: nodejs
+    container_name: nodejs
     ports:
       - "5173:5173"  # Порт для Vite
     volumes:
       - ./:/app
-    command: /bin/sh -c "npm install && npm run build && npm run dev"
+    command: "npm run dev"
+    networks:
+      - app-network
 
   ollama:
     image: ollama/ollama:latest
+    container_name: ollama
     ports:
       - 7869:11434
     volumes:
       - .:/code
       - ./ollama/ollama:/root/.ollama
-    container_name: ollama
     pull_policy: always
     tty: true
     restart: always
@@ -47,13 +75,17 @@ services:
       resources:
         reservations:
           devices:
-            - capabilities: [gpu]  
+            - capabilities: [gpu]
+    networks:
+      - app-network
 
 
   postgres:
     image: pgvector/pgvector:pg17
     volumes:
       - pgsql:/var/lib/postgresql/data/pgdata
+    env_file:
+      - path: .env
     environment:
       - POSTGRES_USER=${DB_USERNAME}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
@@ -62,6 +94,13 @@ services:
       - PGDATA=/var/lib/postgresql/data/pgdata
     ports:
       - 54321:5432
+    networks:
+      - app-network
+
 
 volumes:
   pgsql:
+
+networks:
+  app-network:
+    driver: bridge

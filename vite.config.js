@@ -4,8 +4,11 @@ import vue from '@vitejs/plugin-vue';
 
 export default defineConfig({
     server: {
+        watch: {
+            usePolling: true,
+        },
         strictPort : true ,
-        host : '0.0.0.0',
+        host : true,
         port: 5173,
         origin : "http://127.0.0.1:5173" ,
     },
