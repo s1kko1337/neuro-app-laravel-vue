@@ -57,8 +57,6 @@ EXPOSE 80
 # NodeJS
 FROM node:lts-alpine3.20 AS nodejs
 
-USER root
-
 WORKDIR /app
 
 COPY package*.json ./
@@ -66,5 +64,10 @@ COPY vite.config.js ./
 COPY . .
 
 RUN npm install
+RUN npx vite --version
+
 EXPOSE 5173
+
+ENV PATH /app/node_modules/.bin:$PATH
+
 CMD ["npm", "run", "build"]
