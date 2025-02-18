@@ -2,6 +2,7 @@ ollama/
 # Исключаем виртуальное окружение из контекста сборки
 /python/venv/
 __pycache__/
+pgsql
 *.pyc
 *.pyo
 *.pyd
