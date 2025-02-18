@@ -63,7 +63,7 @@ services:
       - 7869:11434
     volumes:
       - .:/code
-      - ./ollama/ollama:/root/.ollama
+      - ./ollama:/root/.ollama
     pull_policy: always
     tty: true
     restart: always
