@@ -7,6 +7,7 @@ services:
     container_name: php-fpm
     volumes:
       - ./:/var/www/html
+      - vendor-volume:/var/www/html/vendor
     networks:
       - app-network
 
@@ -18,7 +19,7 @@ services:
     container_name: php-cli
     volumes:
       - ./:/app
-    command: php artisan config:clear && php artisan cache:clear
+    command: /bin/sh -c "php artisan config:clear && php artisan cache:clear"
     networks:
       - app-network
 
@@ -49,7 +50,7 @@ services:
       target: nodejs
     container_name: nodejs
     ports:
-      - "5173:5173"  # Порт для Vite
+      - "5173:5173"
     volumes:
       - ./:/app
     command: /bin/sh -c "npm install && npm run dev"
@@ -100,6 +101,7 @@ services:
 
 volumes:
   pgsql:
+  vendor-volume:
 
 networks:
   app-network:
