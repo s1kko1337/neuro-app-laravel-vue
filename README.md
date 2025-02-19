@@ -30,8 +30,9 @@ To run laravel-vue on a local machine you need:
     use make command: make restart
 - for work into php-fpm container (artisan and composer):
     docker exec -it php-fpm /bin/sh
-- for work into ollama container:
+- for work into ollama container (use windows CMD!):
     docker exec -it ollama /bin/sh (you can install models into this container, example: ollama && ollama pull deepseek-r1:1.5b)
+    **IMPORTANT!** *install nomic-embed-text:latest for embeddings*
 - check docker logs:
     @docker-compose -p neuro-laravel logs -f or *make docker-logs*
 - you can work with project outer folder using a file global_makefile (create Makefile by copying this file outer folder)
