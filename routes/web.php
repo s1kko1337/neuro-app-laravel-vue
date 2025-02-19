@@ -14,7 +14,7 @@ Route::get('/files/{id}/preview', [FileController::class, 'preview']);
 
 # Перенаправление запроса на API python
 Route::get('/getInfo', function () {
-    $response = Http::get('http://python:8000/getInfo');
+    $response = Http::get('http://python:8000/metrics');
 
     if ($response->successful()) {
         return $response->json();
