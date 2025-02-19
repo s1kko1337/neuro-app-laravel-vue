@@ -1,0 +1,21 @@
+ollama/
+# Исключаем виртуальное окружение из контекста сборки
+/python/venv/
+__pycache__/
+pgsql
+*.pyc
+*.pyo
+*.pyd
+*.pyd
+.Python
+.env
+.DS_Store
+*.sqlite3
+node_modules/
+*.log
+*.tmp
+*.bak
+.idea/
+.vscode/
+*.swp
+*.swo

@@ -8,25 +8,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Models\Message;
 use App\Models\Embedding;
+
 class OllamaService
 {
-    public function ask (Request $request){
-        $options = [
-            'temperature' => floatval(config('ollama-laravel.temperature'))
-        ];
-
-        $response = Ollama::agent($request->role_discription)
-            ->prompt($request->question.' '.'Respond in Json')
-            ->model(config('ollama-laravel.model'))
-            ->options($options)
-            ->format('json')
-            ->stream(false)
-            ->ask();
-
-        return response()->json($response,200);
-
-    }
-
     public function getModels (){
         try {
             $responseModelsInfo = Ollama::models();
@@ -57,115 +41,38 @@ class OllamaService
             return response()->json(['error' => 'Error getting models', 'errors' => $e->getMessage()], 500);
         }
     }
+    public function splitTextIntoChunks(string $text, int $chunkSize = 50): array
+    {
+        $words = preg_split('/\s+/', $text);
 
-//    public function chat(Request $request)
-//    {
-//        $messages = $request->input('messages'); // Это массив сообщений
-//        $model = $request->input('model');
-//        $chatId = $request->input('chatId');
-//
-//        $lastUserMessage = null;
-//        foreach (array_reverse($messages) as $message) {
-//            if ($message['role'] === 'user') {
-//                $lastUserMessage = $message;
-//                break;
-//            }
-//        }
-//
-//        if (!$lastUserMessage) {
-//            return response()->json([
-//                'error' => 'No user message found',
-//            ], 400);
-//        }
-//
-//
-//        Log::info('Request data:', [
-//            'messages' => $messages,
-//            'model' => $model,
-//            'chatId' => $chatId
-//        ]);
-//
-////        $relevantMessages = $this->getRelevantMessages($chatId, $lastUserMessage['content']);
-//
-//        foreach ($message as $message) {
-//            $messages[] = [
-//                'role' => $message->role,
-//                'content' => $message->content,
-//            ];
-//        }
-//
-//        $response = Ollama::agent('You know all as well!')
-//            ->model($model)
-//            ->chat($messages);
-//
-//        Log::info('Ollama response:', $response);
-//
-//        if (!isset($response['message'])) {
-//            Log::error('Ollama response does not contain "message" key:', $response);
-//            return response()->json([
-//                'error' => 'Ollama response is invalid',
-//            ], 500);
-//        }
-//
-//        $assistantMessage = $response['message']['content'] ?? $response['message'];
-//
-//        DB::transaction(function () use ($lastUserMessage, $assistantMessage, $model, $chatId) {
-//            $chat = Chat::findOrFail($chatId);
-//
-//            $lastUserMessageModel = $chat->messages()->create([
-//                'role' => $lastUserMessage['role'],
-//                'content' => $lastUserMessage['content'],
-//            ]);
-//
-////            $userEmbedding = $this->generateEmbedding($lastUserMessage['content']);
-////            $lastUserMessageModel->embedding()->create([
-////                'embedding' => $userEmbedding,
-////            ]);
-//
-//            $assistantMessageModel = $chat->messages()->create([
-//                'role' => 'assistant',
-//                'content' => $assistantMessage,
-//            ]);
-//
-//            $assistantEmbedding = $this->generateEmbedding($assistantMessage);
-//            $assistantMessageModel->embedding()->create([
-//                'embedding' => $assistantEmbedding,
-//            ]);
-//        });
-//
-//        return response()->json([
-//            'message' => $assistantMessage,
-//        ], 200);
-//    }
+        $chunks = [];
+        $currentChunk = '';
+        foreach ($words as $word) {
+            if (strlen($currentChunk . ' ' . $word) <= $chunkSize) {
+                $currentChunk .= ($currentChunk ? ' ' : '') . $word;
+            } else {
+                $chunks[] = $currentChunk;
+                $currentChunk = $word;
+            }
+        }
+        if ($currentChunk) {
+            $chunks[] = $currentChunk;
+        }
+
+        return $chunks;
+    }
 
     public function chat(Request $request)
     {
         $messages = $request->input('messages');
         $model = $request->input('model');
+        $temperature = $request->input('temperature');
         $chatId = $request->input('chatId');
-
-        //Поиск контекстного сообщения с текстом файла
         $chat = Chat::findOrFail($chatId);
-        $fileContextMessage = $chat->messages()
-            ->where('role', 'user')
-            ->whereNotNull('content')
-            ->first();
+        $response = 0;
 
-        if ($fileContextMessage) {
-            array_unshift($messages, [
-                'role' => $fileContextMessage->role,
-                'content' => $fileContextMessage->content,
-            ]);
-        }
-        //Конец
-
-        $lastUserMessage = null;
-        foreach (array_reverse($messages) as $message) {
-            if ($message['role'] === 'user') {
-                $lastUserMessage = $message;
-                break;
-            }
-        }
+        $lastUserMessage = $this->getLastUserMessage($messages);
+        $lastUserMessageText = $lastUserMessage['content'];
 
         if (!$lastUserMessage) {
             return response()->json([
@@ -173,17 +80,73 @@ class OllamaService
             ], 400);
         }
 
-        Log::info('Request data:', [
-            'messages' => $messages,
-            'model' => $model,
-            'chatId' => $chatId
+        $userMessageChunks = $this->splitTextIntoChunks($lastUserMessage['content']);
+
+        $userMessageEmbeddings = [];
+        foreach ($userMessageChunks as $chunk) {
+            $userMessageEmbeddings[] = $this->generateEmbedding($chunk);
+        }
+
+        $context = $this->getRelevantContext($chatId, $userMessageEmbeddings);
+        Log::info('Context:', [
+            json_encode($context)
         ]);
 
-        $response = Ollama::agent('You know all as well!')
+        if (preg_match('/^deepseek-r1/', $model)) {
+            $systemMessage = [
+                'role' => 'system',
+                'content' => "Всегда отвечай на русском языке, вот необходимый контекст для твоего ответа. Контекст:\n" . $context .".\n. Если ты не умеешь думать на русском языке, думай на другом языке но отвечай на русском.Свой ответ давай на русском языке! Свой ответ переведи на русский."
+            ];
+    
+            array_unshift($messages, $systemMessage);
+    
+            Log::info('Request data:', [
+                'messages' => $messages,
+                'model' => $model,
+                'chatId' => $chatId,
+                'temperature' => $temperature
+            ]);
+    
+            $response = Ollama::agent('Ты отвечаешь только по-русски! Если вопрос задан не на русском языке, все равно отвечай на русском!')
+                ->model($model)
+                ->chat($messages);
+    
+            Log::info('Ollama response:', $response);
+        } else {
+            $helperMessage = Ollama::agent('Ты эксперт в русском языке.')
+            ->prompt("Всегда отвечай на русском языке, вот необходимый контекст для твоего ответа. Вопрос: $lastUserMessageText \n
+            Контекст:\n" . $context .".\n Задай 5 вопросов на русском языке, уточняющих вопрос пользователя и
+            учитывающих переданный контекст, на базе этих вопросов строй свой ответ. 
+            В ответ давай только уточняющие вопросы на русском языке!")
             ->model($model)
-            ->chat($messages);
+            ->stream(false)
+            ->ask();
 
-        Log::info('Ollama response:', $response);
+            $helperResponse =  $helperMessage['response'];
+
+            $systemMessage = [
+                'role' => 'system',
+                'content' => "Всегда отвечай на русском языке. 
+                На базе этих вопросов и уточнений:(\n" . $helperResponse ."),\n составь свой точный ответ на заданный вопрос пользователя, в формате связанного текста, а не прямых ответов на вопросы. Вопрос пользователя: $lastUserMessageText. 
+                Свой ответ давай на русском языке! Свой ответ переведи на русский."
+            ];
+
+            array_unshift($messages, $systemMessage);
+
+            Log::info('Request data:', [
+                'messages' => $messages,
+                'model' => $model,
+                'chatId' => $chatId
+            ]);
+
+            $response = Ollama::agent('На базе вопросов подсказок и контекста ты отвечаешь на вопрос пользователя на русском языке!')
+                ->model($model)
+                ->options(['temperature' => $temperature])
+                ->chat($messages);
+
+            Log::info('Ollama response:', $response);
+        }
+
 
         if (!isset($response['message'])) {
             Log::error('Ollama response does not contain "message" key:', $response);
@@ -194,7 +157,14 @@ class OllamaService
 
         $assistantMessage = $response['message']['content'] ?? $response['message'];
 
-        DB::transaction(function () use ($lastUserMessage, $assistantMessage, $model, $chatId) {
+        $assistantMessageChunks = $this->splitTextIntoChunks($assistantMessage);
+
+        $assistantMessageEmbeddings = [];
+        foreach ($assistantMessageChunks as $chunk) {
+            $assistantMessageEmbeddings[] = $this->generateEmbedding($chunk);
+        }
+
+        DB::transaction(function () use ($lastUserMessage, $assistantMessage, $model, $chatId, $userMessageEmbeddings, $assistantMessageEmbeddings, $systemMessage) {
             $chat = Chat::findOrFail($chatId);
 
             $lastUserMessageModel = $chat->messages()->create([
@@ -202,10 +172,27 @@ class OllamaService
                 'content' => $lastUserMessage['content'],
             ]);
 
+            foreach ($userMessageEmbeddings as $embedding) {
+                $lastUserMessageModel->embedding()->create([
+                    'embedding' => $embedding,
+                ]);
+            }
+
+            $systemMessageModel = $chat->messages()->create([
+                'role' => $systemMessage['role'],
+                'content' => $systemMessage['content'],
+            ]);
+
             $assistantMessageModel = $chat->messages()->create([
                 'role' => 'assistant',
                 'content' => $assistantMessage,
             ]);
+
+            foreach ($assistantMessageEmbeddings as $embedding) {
+                $assistantMessageModel->embedding()->create([
+                    'embedding' => $embedding,
+                ]);
+            }
         });
 
         return response()->json([
@@ -215,13 +202,67 @@ class OllamaService
 
     public function generateEmbedding(string $text): array
     {
-        $embeddings = Ollama::model('nomic-embed-text')->embeddings($text);
+        try {
+            $embeddings = Ollama::model('nomic-embed-text')
+                ->embeddings($text);
 
-        if (empty($embeddings['embedding'])) {
-            Log::error('Failed to generate embedding for text:', ['text' => $text]);
-            throw new \RuntimeException('Failed to generate embedding for the given text.');
+            if (empty($embeddings['embedding'])) {
+                throw new \RuntimeException('Empty embedding received');
+            }
+
+            return $embeddings['embedding'];
+        } catch (\Exception $e) {
+            Log::error('Embedding generation failed', [
+                'error' => $e->getMessage(),
+                'text' => substr($text, 0, 100)
+            ]);
+            throw new \RuntimeException('Failed to generate embedding: ' . $e->getMessage());
         }
+    }
 
-        return $embeddings['embedding'];
+    private function getRelevantContext($chatId, array $embeddings, $limit = 25): string
+    {
+        try {
+            $relevantMessages = collect();
+
+            foreach ($embeddings as $embedding) {
+                $results = Embedding::query()
+                    ->select('messages.content')
+                    ->join('messages', 'embeddings.message_id', '=', 'messages.id')
+                    ->where('messages.chat_id', $chatId)
+                    ->where('messages.role', 'system') // Ищем только системные сообщения (контекст)
+                    ->orderByRaw('embeddings.embedding <=> ?', [json_encode($embedding)])
+                    ->limit($limit)
+                    ->get();
+
+                $relevantMessages = $relevantMessages->merge($results);
+            }
+
+            $uniqueMessages = $relevantMessages->unique('content');
+
+            Log::info('Relevant context found:', [
+                'count' => $uniqueMessages->count(),
+                'chat_id' => $chatId,
+                'embedding_sample' => array_slice($embeddings[0], 0, 5) // Пример первого эмбеддинга для логов
+            ]);
+
+            return $uniqueMessages->pluck('content')->implode("\n\n");
+        } catch (\Exception $e) {
+            Log::error('Error getting relevant context:', [
+                'error' => $e->getMessage(),
+                'chat_id' => $chatId
+            ]);
+            return '';
+        }
+    }
+
+    private function getLastUserMessage(array $messages): ?array
+    {
+        foreach (array_reverse($messages) as $message) {
+            if ($message['role'] === 'user') {
+                return $message;
+            }
+        }
+        return null;
     }
 }

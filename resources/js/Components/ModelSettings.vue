@@ -13,26 +13,21 @@
             <div class="space-y-4">
                 <div>
                     <label class="block mb-2 text-gray-900">Temperature</label>
-                    <input type="range" min="0" max="100" class="w-full" />
-                </div>
-                <div>
-                    <label class="block mb-2 text-gray-900">Max Length</label>
-                    <input
-                        type="number"
-                        class="w-full p-2 rounded-lg border bg-accent border-primary focus:border-accent outline-none"
-                    />
-                </div>
-                <div>
-                    <label class="block mb-2 text-gray-900">Available Tools</label>
-                    <div class="space-y-2">
-                        <label
-                            v-for="tool in tools"
-                            :key="tool"
-                            class="flex items-center space-x-2"
-                        >
-                            <input type="checkbox" class="rounded" />
-                            <span class="text-gray-900">{{ tool }}</span>
-                        </label>
+                    <div class="flex items-center space-x-4">
+                        <input 
+                            type="range" 
+                            min="0" 
+                            max="100" 
+                            v-model="temperature" 
+                            @input="updateTemperature"
+                            class="flex-1"
+                        />
+                        <input
+                            type="text"
+                            v-model="temperature"
+                            @input="handleManualInput"
+                            class="w-20 p-2 border rounded-lg text-center bg-secondary text-gray-900"
+                        />
                     </div>
                 </div>
             </div>
@@ -41,7 +36,7 @@
 </template>
 
 <script>
-import { defineComponent, ref } from "vue";
+import { defineComponent, ref, watch } from "vue";
 import { X } from "lucide-vue-next";
 
 export default defineComponent({
@@ -52,20 +47,37 @@ export default defineComponent({
             required: true,
         },
     },
-    setup(props) {
-        const tools = ref([
-            "Web Search",
-            "Calculator",
-            "Code Interpreter",
-            "Image Analysis",
-        ]);
+    setup(props, { emit }) {
+        const temperature = ref(localStorage.getItem('temperature') || 80);
+
+        const updateTemperature = () => {
+            localStorage.setItem('temperature', temperature.value);
+            emit('update:temperature', temperature.value); 
+        };
+
+        const handleManualInput = (event) => {
+            let value = parseInt(event.target.value, 10);
+
+            if (isNaN(value)) {
+                value = 0;
+            } else if (value < 0) {
+                value = 0;
+            } else if (value > 100) {
+                value = 100;
+            }
+
+            temperature.value = value;
+            updateTemperature();
+        };
 
         const onClose = () => {
             props.onClose();
         };
 
         return {
-            tools,
+            temperature,
+            updateTemperature,
+            handleManualInput,
             onClose,
         };
     },
@@ -74,3 +86,15 @@ export default defineComponent({
     },
 });
 </script>
+
+<style scoped>
+input[type="text"] {
+    border: 1px solid #ccc;
+    outline: none;
+}
+
+input[type="text"]:focus {
+    border-color: #3b82f6; 
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2); 
+}
+</style>

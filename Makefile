@@ -26,23 +26,19 @@ docker-build: \
 	docker-build-app-php-cli \
 	docker-build-app-php-fpm \
 	docker-build-app-nginx \
-#	docker-build-app-nodejs \
+	docker-build-app-nodejs \
 
 docker-build-app-nginx:
-	@docker build --target=nginx \
-	-t ${REGISTRY}/${INDEX}-nginx:${IMAGE_TAG} -f ./docker/Dockerfile .
+	@docker-compose -p neuro build nginx
 
 docker-build-app-php-fpm:
-	@docker build --target=fpm \
-	-t ${REGISTRY}/${INDEX}-php-fpm:${IMAGE_TAG} -f ./docker/Dockerfile .
+	@docker-compose -p neuro build php-fpm
 
 docker-build-app-php-cli:
-	@docker build --target=cli \
-	-t ${REGISTRY}/${INDEX}-php-cli:${IMAGE_TAG} -f ./docker/Dockerfile .
+	@docker-compose -p neuro build php-cli
 
 docker-build-app-nodejs:
-	@docker build --target=nodejs \
-	-t ${REGISTRY}/${INDEX}-nodejs:${IMAGE_TAG} -f ./docker/Dockerfile .
+	@docker-compose -p neuro build nginx
 
 docker-logs:
 	@docker-compose -p ${INDEX} logs -f
@@ -68,11 +64,8 @@ build:
 watch:
 	@docker-compose run --rm app-nodejs npm run dev
 
-nginx:
-	@docker exec -it neuro-nginx-1 /bin/sh
-
 node:
-	@docker-compose exec nodejs /bin/sh
+	@docker-compose exec ${INDEX}-app-nodejs /bin/sh
 
 ollama:
 	@docker exec -it ollama /bin/bash
