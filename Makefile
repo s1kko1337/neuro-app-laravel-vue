@@ -50,8 +50,11 @@ docker-build-nodejs:
 docker-logs:
 	@docker-compose -p ${INDEX} logs -f
 
-# Работа с php-fpm (atrisan, composer)
+# Работа с php-cli (atrisan, composer)
 shell:
+	docker-compose -p neuro-laravel run --rm php-cli /bin/sh
+# Работа с php-fpm
+php-fpm:
 	@docker exec -it php-fpm /bin/sh
 # Работа с ollama контейнером
 ollama:
