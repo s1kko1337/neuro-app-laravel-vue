@@ -14,7 +14,17 @@ Route::get('models', [ChatController::class, '__invoke']);
 Route::post('chat', [ChatController::class, 'send']);
 Route::get('chats', [ChatController::class, 'getChats']);
 Route::post('createChat', [ChatController::class, 'addChat']);
-Route::get('chats/{chatId}/messages', [ChatController::class, 'getChatMessages']);
+#Route::get('chats/{chatId}/messages', [ChatController::class, 'getChatMessages']);
+Route::get('chats/{chatId}/messages', function($chatId) {
+    // Используем переменную $chatId в URL
+    $response = Http::get("http://python:8000/messages/chat/{$chatId}");
+
+    if ($response->successful()) {
+        return $response->json();
+    } else {
+        return response()->json(['error' => 'Unable to fetch data'], $response->status());
+    }
+});
 Route::post('/upload', [FileController::class, '__invoke']);
 Route::post('/generate-context', [GenerateContextController::class, '__invoke']);
 
