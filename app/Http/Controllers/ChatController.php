@@ -26,14 +26,51 @@ class ChatController extends Controller
         return $response;
     }
 
+
+    /**
+     * Отправляет сообщения в чат.
+     *
+     * Этот метод принимает запрос с массивом сообщений и идентификатором чата,
+     * проверяет существование чата, извлекает последнее сообщение от пользователя
+     * и отправляет его на внешний сервис.
+     *
+     * @param Request $request Входящий HTTP-запрос.
+     *
+     * @return JsonResponse Ответ от внешнего сервиса в формате JSON.
+     *
+     * @throws ValidationException Если валидация запроса не проходит.
+     * @throws ModelNotFoundException Если чат с указанным идентификатором не найден.
+     */
     public function send(Request $request)
     {
-        $request->validate([
+        // Валидация входящих данных
+        $validatedData = $request->validate([
             'messages' => 'required|array',
+            'chatId' => 'required|integer', // Добавляем валидацию для chatId
         ]);
 
-        return $this->ollamaService->chat($request);
+        $chatId = $validatedData['chatId'];
+
+        // Попытка найти чат по идентификатору
+        try {
+            $chat = Chat::findOrFail($chatId);
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['error' => 'Chat not found.'], 404);
+        }
+
+        // Получение последнего сообщения от пользователя
+        $lastUserMessage = $this->getLastUserMessage($validatedData['messages']);
+
+        // Отправка POST-запроса на FastAPI
+        $response = Http::post("http://python:8000/chats/{$chatId}/message", [
+            'content' => json_encode($lastUserMessage),
+            'role' => 'user',
+        ]);
+
+        // Возврат ответа от FastAPI
+        return $response->json();
     }
+
     public function getChats()
     {
         $chats = Chat::with('messages')->get();
@@ -50,5 +87,15 @@ class ChatController extends Controller
     {
         $messages = Message::where('chat_id', $chatId)->get();
         return response()->json($messages);
+    }
+
+    private function getLastUserMessage(array $messages): ?array
+    {
+        foreach (array_reverse($messages) as $message) {
+            if ($message['role'] === 'user') {
+                return $message;
+            }
+        }
+        return null;
     }
 }

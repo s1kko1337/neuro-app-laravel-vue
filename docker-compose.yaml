@@ -83,6 +83,7 @@ services:
 
   postgres:
     image: pgvector/pgvector:pg17
+    container_name: postgres
     volumes:
       - pgsql:/var/lib/postgresql/data/pgdata
     env_file:
@@ -105,4 +106,5 @@ volumes:
 
 networks:
   app-network:
+    external: true
     driver: bridge
