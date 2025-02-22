@@ -1,71 +1,65 @@
+# Подключение окружения проекта
 include .env
 
+# Создание образов, контейнеров и их запуск
 install:
 	@$(MAKE) -s down
 	@$(MAKE) -s docker-build
 	@$(MAKE) -s up
-	@$(MAKE) -s composer-install
 
+# Сборка контейнеров
+build: docker-build
+# Перезапуск контейнеров
 restart: down up
+# Запуск контейнеров
 up: docker-up
+# Удаление контейнеров
 down: docker-down
 
+# Просмотр запущенных контейнеров
 ps:
-	@docker-compose ps
+	@docker ps
 
-get-pwd:
-	echo $(PWD)
-
+# Запуск контейнеров
 docker-up:
 	@docker-compose -p ${INDEX} up -d
-
+# Удаление контейнеров
 docker-down:
 	@docker-compose -p ${INDEX} down --remove-orphans
-
+# Создание образов для контейнеров
 docker-build: \
-	docker-build-app-php-cli \
-	docker-build-app-php-fpm \
-	docker-build-app-nginx \
-	docker-build-app-nodejs \
+	docker-build-php-cli \
+	docker-build-php-fpm \
+	docker-build-nginx \
+	docker-build-nodejs
 
-docker-build-app-nginx:
-	@docker-compose -p neuro build nginx
+# Образ для nginx
+docker-build-nginx:
+	@docker-compose -p ${INDEX} build nginx --no-cache
+# Образ для php-fpm
+docker-build-php-fpm:
+	@docker-compose -p ${INDEX} build php-fpm --no-cache
+# Образ для php-cli
+docker-build-php-cli:
+	@docker-compose -p ${INDEX} build php-cli --no-cache
+# Образ для nodejs (запуск vite)
+docker-build-nodejs:
+	@docker-compose -p ${INDEX} build nginx --no-cache
 
-docker-build-app-php-fpm:
-	@docker-compose -p neuro build php-fpm
-
-docker-build-app-php-cli:
-	@docker-compose -p neuro build php-cli
-
-docker-build-app-nodejs:
-	@docker-compose -p neuro build nginx
-
+# Просмотр логов контейнеров
 docker-logs:
 	@docker-compose -p ${INDEX} logs -f
 
-app-php-cli-exec:
-	@docker-compose -p ${INDEX} run --rm php-cli $(cmd)
-
-composer-install:
-	$(MAKE) app-php-cli-exec cmd="composer install"
-
-composer-update:
-	$(MAKE) app-php-cli-exec cmd="composer update"
-
+# Работа с php-cli (atrisan, composer)
 shell:
-	@docker-compose -p ${INDEX} run --rm php-cli /bin/sh
+	docker-compose -p neuro-laravel run --rm php-cli /bin/sh
+# Работа с php-fpm
+php-fpm:
+	@docker exec -it php-fpm /bin/sh
+# Работа с ollama контейнером
+ollama:
+	@docker exec -it ollama /bin/sh
 
 chown:
 	@$(MAKE) app-php-cli-exec cmd="chown 1000:1000 -R ./"
 
-build:
-	@docker-compose run --rm app-nodejs
-
-watch:
-	@docker-compose run --rm app-nodejs npm run dev
-
-node:
-	@docker-compose exec ${INDEX}-app-nodejs /bin/sh
-
-ollama:
-	@docker exec -it ollama /bin/bash
