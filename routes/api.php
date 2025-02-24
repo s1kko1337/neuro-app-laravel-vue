@@ -8,6 +8,7 @@ use App\Http\Controllers\GenerateContextController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
+use App\Models\UploadedFile;
 
 Route::get('models', function() {
     $response = Http::get('http://python:8000/llm/models');
@@ -45,7 +46,34 @@ Route::get('chats/{chatId}/messages/{messageId}', function($chatId, $messageId) 
         return response()->json(['error' => 'Unable to fetch data'], $response->status());
     }
 });
-Route::post('/upload', [FileController::class, '__invoke']);
+
+Route::post('/upload', function(Request $request) {
+    $request->validate([
+        'file' => 'required|file|mimes:pdf,docx,csv,xml|max:10240',
+    ]);
+    
+    $file = $request->file('file');
+    
+    $response = Http::attach(
+        'file', 
+        file_get_contents($file->path()),
+        $file->getClientOriginalName()
+    )->post('http://python:8000/files');
+    
+    if ($response->successful()) {
+        UploadedFile::create([
+            'original_name' => $response->json()['original_name'],
+            'path' => $response->json()['document_id'],
+        ]);
+        
+        return $response->json();
+    }
+    
+    return response()->json(['error' => 'Ошибка обработки файла'], 500);
+});
+
+// Route::post('/upload', [FileController::class, '__invoke']);
+
 Route::post('/generate-context', [GenerateContextController::class, '__invoke']);
 
 
