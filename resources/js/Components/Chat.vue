@@ -95,8 +95,8 @@
                                     <Settings size="20"
                                     />
                                 </button>
-                                <ModelSettings 
-                                  v-if="isModelSettingsVisible" 
+                                <ModelSettings
+                                  v-if="isModelSettingsVisible"
                                   :on-close="closeModelSettings"
                                   v-model:temperature="temperature"
                                 />
@@ -211,7 +211,7 @@ export default {
             inputMessage.value = "";
 
             try {
-                const response = await axios.post('/api/chat', {
+                const response = await axios.post(`/api/chats/${currentChatId.value}/messages`, {
                     messages: messages.value,
                     model: currentModel.value,
                     chatId: currentChatId.value,
