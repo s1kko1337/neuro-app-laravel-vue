@@ -53,7 +53,8 @@ Route::post('/upload', function(Request $request) {
     ]);
     
     $file = $request->file('file');
-    
+    $file->getClientOriginalName();
+
     $response = Http::attach(
         'file', 
         file_get_contents($file->path()),
@@ -63,7 +64,7 @@ Route::post('/upload', function(Request $request) {
     if ($response->successful()) {
         UploadedFile::create([
             'original_name' => $response->json()['original_name'],
-            'path' => $response->json()['document_id'],
+            'path' => "uploads/". $response->json()['document_id'] . $response->json()['file_extension'],
         ]);
         
         return $response->json();

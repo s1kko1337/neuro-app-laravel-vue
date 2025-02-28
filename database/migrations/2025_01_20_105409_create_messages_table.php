@@ -16,6 +16,8 @@ return new class extends Migration
             $table->foreignId('chat_id')->constrained()->onDelete('cascade');
             $table->string('role');
             $table->text('content');
+            $table->text('global_collection')->nullable();
+            $table->text('local_collection')->nullable();
             $table->timestamps();
         });
     }
