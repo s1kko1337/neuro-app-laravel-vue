@@ -9,8 +9,6 @@ Route::get('/', function () {
     return view('app');
 });
 
-Route::get('/files/{id}/preview', [FileController::class, 'preview']);
-
 
 # Перенаправление запроса на API python
 Route::get('/getInfo', function () {

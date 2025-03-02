@@ -31,7 +31,13 @@
                 <h3 class="text-lg font-semibold text-gray-900">Uploaded Files</h3>
                 <ul>
                     <li v-for="file in uploadedFiles" :key="file.id" class="text-accent ml-4 space-y-2">
-                        <a :href="file.url" target="_blank">{{ file.name }}</a>
+<!--                        <a :href="file.url" target="_blank">{{ file.name }}</a>-->
+                        <div class="flex justify-between group">
+                            <a @click="previewFile(file)" class="group-hover:text-red-500">{{ file.name }}</a>
+                            <button @click="deleteFile(file)" class="group-hover:text-red-500">
+                                <X size="20" class="text-gray-900"/>
+                            </button>
+                        </div>
                     </li>
                 </ul>
                 <button @click="generateContext" class="mt-4 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600">
@@ -44,8 +50,7 @@
 
 <script>
 import { X, Upload } from "lucide-vue-next";
-import axios from "axios";
-import { ref } from "vue";
+import {onMounted, ref} from "vue";
 
 export default {
     name: "FileUpload",
@@ -65,43 +70,70 @@ export default {
     },
     setup(props) {
         const fileInput = ref(null);
-        const uploadedFiles = ref([]);
+        const uploadedFiles = ref([]); // .url and .name
 
-        const triggerFileInput = () => {
+        const triggerFileInput = async () => {
             fileInput.value.click();
         };
+        onMounted(async () => {
+            // Загрузка существующих файлов
+            await fetchFiles()
+        })
+
+        const fetchFiles = async () => {
+            try {
+                // Получение массива файлов.
+                let response = await axios.get(`/api/files/${props.currentChatId}`);
+                if (response.data && response.data.documents) {
+                    // Преобразуем в массив объектов
+                    uploadedFiles.value = response.data.documents.map(doc => ({
+                        id: doc.id,
+                        name: doc.original_name,
+                        url: doc.path
+                    }));
+                } else {
+                    console.error('Неожиданный формат ответа:', response.data);
+                    uploadedFiles.value = []
+                    this.error = 'Ошибка получения файлов: неверный формат данных';
+                }
+
+            } catch (e) {
+                console.log(e.message)
+            }
+        }
 
         const handleFileUpload = async (event) => {
             const files = event.target.files;
             if (files.length > 0) {
                 const formData = new FormData();
+                // file:, file:
+                formData.append('chat_id', props.currentChatId);
                 for (let i = 0; i < files.length; i++) {
-                    formData.append('file', files[i]);
+                    formData.append('files[]', files[i]);
                 }
 
                 try {
-                    const response = await axios.post('/api/upload', formData, {
+                    const response = await axios.post(`/api/files/${props.currentChatId}`, formData, {
                         headers: {
                             'Content-Type': 'multipart/form-data',
                         },
                     });
-                    const fileId = response.data.file_id;
-                    const filePreviewResponse = await axios.get(`/files/${fileId}/preview`, {
-                        responseType: 'blob',
-                    });
-                    const fileURL = URL.createObjectURL(filePreviewResponse.data);
+                    await fetchFiles();
 
-                    // Store the response and file URL in uploadedFiles
-                    uploadedFiles.value.push({
-                        id: fileId,
-                        url: fileURL,
-                        name: response.data.original_name,
-                    });
                 } catch (error) {
                     console.error('Error uploading file:', error);
                 }
             }
         };
+
+        const deleteFile = async (file) => {
+            try {
+                let response = await axios.delete(`/api/files/${props.currentChatId}/${file.id}`)
+                await fetchFiles();
+            } catch (e) {
+                console.log(e.message)
+            }
+        }
 
         const generateContext = async () => {
             const fileIds = uploadedFiles.value.map(file => file.id);
@@ -121,6 +153,51 @@ export default {
             props.onClose();
         };
 
+        const previewFile = async (file) => {
+            try {
+                let response = await axios.get(`/api/files/${props.currentChatId}/${file.id}`, {
+                    responseType: 'blob', // Указываем, что ожидаем бинарные данные
+                });
+
+                // Проверяем, что ответ содержит данные
+                if (response.data) {
+                    // Получаем тип файла из заголовка или имени файла
+                    const contentType = response.headers['content-type'];
+                    const fileExtension = file.name.split('.').pop().toLowerCase();
+
+                    // Проверяем, является ли файл PDF
+                    if (contentType === 'application/pdf' || fileExtension === 'pdf') {
+                        // Создаем URL для BLOB
+                        const url = window.URL.createObjectURL(response.data);
+
+                        // Открываем PDF в новом окне или вкладке
+                        const newWindow = window.open(url);
+                        if (!newWindow) {
+                            alert('Пожалуйста, разрешите всплывающие окна для этого сайта.');
+                        }
+                    } else {
+                        // Для других типов файлов инициируем скачивание
+                        const url = window.URL.createObjectURL(response.data);
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.setAttribute('download', file.name || 'download'); // Указываем имя файла для скачивания
+
+                        // Добавляем элемент на страницу
+                        document.body.appendChild(link);
+                        link.click(); // Инициируем клик для скачивания
+
+                        // Удаляем элемент после скачивания
+                        document.body.removeChild(link);
+                        window.URL.revokeObjectURL(url); // Освобождаем память
+                    }
+                } else {
+                    console.error('Нет данных в ответе');
+                }
+            } catch (e) {
+                console.error('Ошибка при получении файла:', e.message);
+            }
+        };
+
         return {
             fileInput,
             uploadedFiles,
@@ -128,6 +205,8 @@ export default {
             handleFileUpload,
             generateContext,
             onClose,
+            previewFile,
+            deleteFile
         };
     },
 };

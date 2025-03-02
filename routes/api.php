@@ -46,32 +46,11 @@ Route::get('chats/{chatId}/messages/{messageId}', function($chatId, $messageId) 
         return response()->json(['error' => 'Unable to fetch data'], $response->status());
     }
 });
-
-Route::post('/upload', function(Request $request) {
-    $request->validate([
-        'file' => 'required|file|mimes:pdf,docx,csv,xml|max:10240',
-    ]);
-    
-    $file = $request->file('file');
-    $file->getClientOriginalName();
-
-    $response = Http::attach(
-        'file', 
-        file_get_contents($file->path()),
-        $file->getClientOriginalName()
-    )->post('http://python:8000/files');
-    
-    if ($response->successful()) {
-        UploadedFile::create([
-            'original_name' => $response->json()['original_name'],
-            'path' => "uploads/". $response->json()['document_id'] . $response->json()['file_extension'],
-        ]);
-        
-        return $response->json();
-    }
-    
-    return response()->json(['error' => 'Ошибка обработки файла'], 500);
-});
+# Работа с файлами
+Route::post('/files/{chat_id}', [FileController::class, 'upload']);
+Route::get('/files/{chat_id}', [FileController::class, 'getFiles']);
+Route::get('/files/{chat_id}/{document_id}', [FileController::class, 'preview']);
+Route::delete('/files/{chat_id}/{document_id}', [FileController::class, 'delete']);
 
 // Route::post('/upload', [FileController::class, '__invoke']);
 

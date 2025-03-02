@@ -10,6 +10,7 @@ return new class extends Migration
     {
         Schema::create('uploaded_files', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('chat_id')->constrained('chats')->onDelete('cascade')->onUpdate('cascade');
             $table->string('path'); // Путь к файлу
             $table->string('original_name');
             $table->timestamps();
