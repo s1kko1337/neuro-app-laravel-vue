@@ -46,9 +46,13 @@ class ChatController extends Controller
         // Валидация входящих данных
         $validatedData = $request->validate([
             'messages' => 'required|array',
-            'chatId' => 'required|integer', // Добавляем валидацию для chatId
-            'model' => 'required|string', // Добавляем валидацию для model
-        ]);
+            'chatId' => 'required|integer',
+            'model' => 'required|string',
+            'use_local_collection' => 'nullable|bool',
+            'use_global_collection' => 'nullable|bool',
+            'global_collection' => 'nullable|string',
+            'local_collection' =>  'nullable|string'
+            ]);
 
         $chatId = $validatedData['chatId'];
 
@@ -66,7 +70,8 @@ class ChatController extends Controller
         // Добавляем поле model к последнему сообщению
         if (!empty($validatedData['messages'])) {
             $lastIndex = count($validatedData['messages']) - 1;
-            $validatedData['messages'][$lastIndex]['model'] = $request->model; // Добавляем поле model
+            $validatedData['messages'][$lastIndex]['model'] = $request->model;
+            $validatedData['messages'][$lastIndex]['local_collection'] = $request->local_collection;// Добавляем поле model
         }
 
         // Отправка POST-запроса на FastAPI
@@ -77,7 +82,8 @@ class ChatController extends Controller
                 Make sure your answer is as accurate and complete as possible.
                 Use the provided context to improve the quality of your answer.
                 If the question is asked in another language, translate it into Russian before answering.
-                "
+            ",
+            'use_local_collection' =>  $validatedData['use_local_collection']
         ]);
         // Логируем ответ от FastAPI
         \Log::info('Response from FastAPI:', ['response' => $response->json()]); // Передаем массив в качестве контекста

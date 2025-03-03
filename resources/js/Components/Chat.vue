@@ -89,7 +89,7 @@
                                     <Upload size="20"
                                     />
                                 </button>
-                                <FileUpload v-if="isFileUploadVisible" :on-close="closeFileUpload" :currentChatId="currentChatId"/>
+                                <FileUpload v-if="isFileUploadVisible" :on-close="closeFileUpload" :currentChatId="currentChatId"     :onCollectionCreated="handleCollectionCreated"/>
                                 <button @click="isModelSettingsVisible = true"
                                         class="p-2 rounded-lg hover:bg-primary hover:text-accent">
                                     <Settings size="20"
@@ -158,7 +158,10 @@ export default {
         const isMenuOpen = ref(false);
         const isSending = ref(false);
         const temperature = ref(localStorage.getItem('temperature') / 100 || 0.8);
-
+        const chatCollectionParams = ref({
+            use_local_collection: false,
+            local_collection: null
+        });
         const handleTemperatureUpdate = (newTemperature) => {
             temperature.value = newTemperature;
         };
@@ -180,6 +183,11 @@ export default {
 
         const handleModelSelected = (model) => {
             currentModel.value = model;
+        };
+
+        const handleCollectionCreated = (params) => {
+            chatCollectionParams.value = params;
+            console.log('Collection params updated for this chat:', chatCollectionParams.value);
         };
 
         onMounted(async () => {
@@ -215,7 +223,9 @@ export default {
                     messages: messages.value,
                     model: currentModel.value,
                     chatId: currentChatId.value,
-                    temperature: temperature.value
+                    temperature: temperature.value,
+                    use_local_collection: chatCollectionParams.value.use_local_collection,
+                    local_collection: chatCollectionParams.value.local_collection
                 });
 
                 const assistantMessage = response.data.message;
@@ -266,9 +276,11 @@ export default {
             loadMessages,
             chats,
             currentChatId,
+            chatCollectionParams,
             toggleMenu,
             isMenuOpen,
-            handleTemperatureUpdate
+            handleTemperatureUpdate,
+            handleCollectionCreated
         };
     },
     computed: {

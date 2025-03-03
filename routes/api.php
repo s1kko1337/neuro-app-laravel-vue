@@ -52,8 +52,7 @@ Route::get('/files/{chat_id}', [FileController::class, 'getFiles']);
 Route::get('/files/{chat_id}/{document_id}', [FileController::class, 'preview']);
 Route::delete('/files/{chat_id}/{document_id}', [FileController::class, 'delete']);
 
-// Route::post('/upload', [FileController::class, '__invoke']);
 
-Route::post('/generate-context', [GenerateContextController::class, '__invoke']);
-
+Route::post('/collection/create', [GenerateContextController::class, 'create']);
+Route::delete('/collection/{chat_id}', [GenerateContextController::class, 'delete']);
 

@@ -51,7 +51,7 @@ class FileController extends Controller
 
         $chatId = $request->chat_id;
         $files = $request->file('files');
-
+        
         // Initialize HTTP request
         $httpRequest = Http::asMultipart();
 

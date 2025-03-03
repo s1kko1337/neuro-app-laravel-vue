@@ -40,8 +40,8 @@
                         </div>
                     </li>
                 </ul>
-                <button @click="generateContext" class="mt-4 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600">
-                    Generate Context
+                <button @click="createCollection" class="mt-4 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600">
+                    Create collection
                 </button>
             </div>
         </div>
@@ -49,6 +49,7 @@
 </template>
 
 <script>
+import axios from "axios";
 import { X, Upload } from "lucide-vue-next";
 import {onMounted, ref} from "vue";
 
@@ -63,6 +64,10 @@ export default {
             type: [String, Number],
             default: null
         },
+        onCollectionCreated: {
+            type: Function,
+            default: () => {}
+        }
     },
     components: {
         X,
@@ -71,7 +76,6 @@ export default {
     setup(props) {
         const fileInput = ref(null);
         const uploadedFiles = ref([]); // .url and .name
-
         const triggerFileInput = async () => {
             fileInput.value.click();
         };
@@ -129,23 +133,35 @@ export default {
         const deleteFile = async (file) => {
             try {
                 let response = await axios.delete(`/api/files/${props.currentChatId}/${file.id}`)
+                let collection_response = await axios.delete(`/api/collection/${props.currentChatId}`)
                 await fetchFiles();
             } catch (e) {
                 console.log(e.message)
             }
         }
 
-        const generateContext = async () => {
-            const fileIds = uploadedFiles.value.map(file => file.id);
+        const createCollection = async () => {
             try {
-                const response = await axios.post('/api/generate-context', {
-                    file_ids: fileIds,
-                    chat_id: props.currentChatId
+                // Create the collection
+                const response = await axios.post('/api/collection/create', {
+                    chat_id: parseInt(props.currentChatId)
                 });
-                console.log('Context generated successfully:', response.data);
+                
+                console.log('Collection created:', response.data.collection);
+                
+                // Create collection parameters for this specific chat
+                const collectionName = `collection-${props.currentChatId}`;
+                const collectionParams = {
+                    use_local_collection: true,
+                    local_collection: collectionName
+                };
+                
+                // Call the callback function with collection parameters
+                props.onCollectionCreated(collectionParams);
+                
                 props.onClose();
             } catch (error) {
-                console.error('Error generating context:', error);
+                console.error('Error creating collection:', error);
             }
         };
 
@@ -203,7 +219,7 @@ export default {
             uploadedFiles,
             triggerFileInput,
             handleFileUpload,
-            generateContext,
+            createCollection,
             onClose,
             previewFile,
             deleteFile
