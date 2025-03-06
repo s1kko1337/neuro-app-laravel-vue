@@ -159,8 +159,8 @@ export default {
         const isSending = ref(false);
         const temperature = ref(localStorage.getItem('temperature') / 100 || 0.8);
         const chatCollectionParams = ref({
-            use_local_collection: false,
-            local_collection: null
+            local_collection: null,
+            use_local_collection: false
         });
         const handleTemperatureUpdate = (newTemperature) => {
             temperature.value = newTemperature;
@@ -206,9 +206,39 @@ export default {
         watch(currentChatId, (newChatId) => {
             if (!newChatId) {
                 messages.value = [];
+                chatCollectionParams.value = {
+                    local_collection: null,
+                    use_local_collection: false
+                };
+            }
+            else {
+                checkCollectionForCurrentChat();
             }
         });
 
+        const checkCollectionForCurrentChat = () => {
+          try {
+            const COLLECTIONS_STORAGE_KEY = 'chat_collections';
+            const storedCollections = localStorage.getItem(COLLECTIONS_STORAGE_KEY);
+
+            if (storedCollections && currentChatId.value) {
+              const collections = JSON.parse(storedCollections);
+              const chatCollection = collections[currentChatId.value];
+            
+              if (chatCollection) {
+                chatCollectionParams.value = chatCollection;
+                console.log('Collection params loaded for chat:', currentChatId.value, chatCollectionParams.value);
+              } else {
+                chatCollectionParams.value = {
+                  local_collection: null,
+                  use_local_collection: false
+                };
+              }
+            }
+          } catch (error) {
+            console.error('Error checking collection for chat:', error);
+          }
+        };
 
         const sendMessage = async () => {
             if (!inputMessage.value.trim() || isSending.value) return;
@@ -244,6 +274,8 @@ export default {
                 messages.value = response.data;
                 currentChatId.value = chatId;
                 localStorage.setItem('selectedChatId', chatId);
+                
+                checkCollectionForCurrentChat();
             } catch (error) {
                 console.error("Error loading messages:", error);
             }

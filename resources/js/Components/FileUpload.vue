@@ -75,14 +75,53 @@ export default {
     },
     setup(props) {
         const fileInput = ref(null);
-        const uploadedFiles = ref([]); // .url and .name
+        const uploadedFiles = ref([]); 
+        const collectionInfo = ref(null);
+        const COLLECTIONS_STORAGE_KEY = 'chat_collections';
+        
         const triggerFileInput = async () => {
             fileInput.value.click();
         };
+        
         onMounted(async () => {
-            // Загрузка существующих файлов
-            await fetchFiles()
-        })
+            await fetchFiles();
+            
+            loadCollectionInfo();
+        });
+        
+        const loadCollectionInfo = () => {
+        try {
+            const storedCollections = localStorage.getItem(COLLECTIONS_STORAGE_KEY);
+            if (storedCollections) {
+                const collections = JSON.parse(storedCollections);
+                const chatCollection = collections[props.currentChatId];
+                if (chatCollection) {
+                    collectionInfo.value = chatCollection;
+
+                    if (props.onCollectionCreated && typeof props.onCollectionCreated === 'function') {
+                        props.onCollectionCreated(chatCollection);
+                    }
+                }
+            }
+                } catch (error) {
+                    console.error('Error loading collection info from localStorage:', error);
+            }
+        };
+        
+        const saveCollectionInfo = (collectionData) => {
+            try {
+                const storedCollections = localStorage.getItem(COLLECTIONS_STORAGE_KEY);
+                const collections = storedCollections ? JSON.parse(storedCollections) : {};
+                
+                collections[props.currentChatId] = collectionData;
+                
+                localStorage.setItem(COLLECTIONS_STORAGE_KEY, JSON.stringify(collections));
+                
+                collectionInfo.value = collectionData;
+            } catch (error) {
+                console.error('Error saving collection info to localStorage:', error);
+            }
+        };
 
         const fetchFiles = async () => {
             try {
@@ -134,11 +173,32 @@ export default {
             try {
                 let response = await axios.delete(`/api/files/${props.currentChatId}/${file.id}`)
                 let collection_response = await axios.delete(`/api/collection/${props.currentChatId}`)
+                
+                if (collection_response.status === 200 || collection_response.status === 204) {
+                    removeCollectionInfo();
+                }
+                
                 await fetchFiles();
             } catch (e) {
                 console.log(e.message)
             }
         }
+        
+        const removeCollectionInfo = () => {
+            try {
+                const storedCollections = localStorage.getItem(COLLECTIONS_STORAGE_KEY);
+                if (storedCollections) {
+                    const collections = JSON.parse(storedCollections);
+                    if (collections[props.currentChatId]) {
+                        delete collections[props.currentChatId];
+                        localStorage.setItem(COLLECTIONS_STORAGE_KEY, JSON.stringify(collections));
+                        collectionInfo.value = null;
+                    }
+                }
+            } catch (error) {
+                console.error('Error removing collection info from localStorage:', error);
+            }
+        };
 
         const createCollection = async () => {
             try {
@@ -149,14 +209,16 @@ export default {
                 
                 console.log('Collection created:', response.data.collection);
                 
-                // Create collection parameters for this specific chat
                 const collectionName = `collection-${props.currentChatId}`;
                 const collectionParams = {
                     use_local_collection: true,
-                    local_collection: collectionName
+                    local_collection: collectionName,
+                    collection_id: response.data.collection.id,
+                    created_at: new Date().toISOString()
                 };
                 
-                // Call the callback function with collection parameters
+                saveCollectionInfo(collectionParams);
+                
                 props.onCollectionCreated(collectionParams);
                 
                 props.onClose();
@@ -214,9 +276,11 @@ export default {
             }
         };
 
+        
         return {
             fileInput,
             uploadedFiles,
+            collectionInfo,
             triggerFileInput,
             handleFileUpload,
             createCollection,
@@ -226,4 +290,33 @@ export default {
         };
     },
 };
+
+export function hasCollectionForChat(chatId) {
+    try {
+        const storedCollections = localStorage.getItem('chat_collections');
+        if (storedCollections) {
+            const collections = JSON.parse(storedCollections);
+            return !!collections[chatId];
+        }
+        return false;
+    } catch (error) {
+        console.error('Error checking collection existence:', error);
+        return false;
+    }
+}
+
+// Add this as a static method to get collection info
+export function getCollectionForChat(chatId) {
+    try {
+        const storedCollections = localStorage.getItem('chat_collections');
+        if (storedCollections) {
+            const collections = JSON.parse(storedCollections);
+            return collections[chatId] || null;
+        }
+        return null;
+    } catch (error) {
+        console.error('Error getting collection info:', error);
+        return null;
+    }
+}
 </script>
