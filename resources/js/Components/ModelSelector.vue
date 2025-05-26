@@ -33,7 +33,7 @@ export default {
 
         const fetchModels = async () => {
             try {
-                let response = await axios.get('/api/models');
+                let response = await axios.get('/api/v1/models');
                 models.value = response.data.models;
             } catch (e) {
                 console.error("Error fetching models:", e);

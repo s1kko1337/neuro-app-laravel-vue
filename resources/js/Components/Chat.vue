@@ -192,7 +192,7 @@ export default {
 
         onMounted(async () => {
             try {
-                const response = await axios.get('/api/chats');
+                const response = await axios.get('/api/v1/chats');
                 chats.value = response.data;
 
                 if (currentChatId.value) {
@@ -224,7 +224,7 @@ export default {
             if (storedCollections && currentChatId.value) {
               const collections = JSON.parse(storedCollections);
               const chatCollection = collections[currentChatId.value];
-            
+
               if (chatCollection) {
                 chatCollectionParams.value = chatCollection;
                 console.log('Collection params loaded for chat:', currentChatId.value, chatCollectionParams.value);
@@ -249,7 +249,7 @@ export default {
             inputMessage.value = "";
 
             try {
-                const response = await axios.post(`/api/chats/${currentChatId.value}/messages`, {
+                const response = await axios.post(`/api/v1/chats/${currentChatId.value}/messages`, {
                     messages: messages.value,
                     model: currentModel.value,
                     chatId: currentChatId.value,
@@ -270,11 +270,11 @@ export default {
 
         const loadMessages = async (chatId) => {
             try {
-                const response = await axios.get(`/api/chats/${chatId}/messages`);
+                const response = await axios.get(`/api/v1/chats/${chatId}/messages`);
                 messages.value = response.data;
                 currentChatId.value = chatId;
                 localStorage.setItem('selectedChatId', chatId);
-                
+
                 checkCollectionForCurrentChat();
             } catch (error) {
                 console.error("Error loading messages:", error);
@@ -283,7 +283,7 @@ export default {
 
         const addChatHandler = async () => {
             try {
-                const response = await axios.post('/api/createChat');
+                const response = await axios.post('/api/v1/createChat');
                 chats.value.push(response.data);
                 const newChat = response.data;
                 currentChatId.value = newChat.id;
