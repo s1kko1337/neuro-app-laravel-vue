@@ -89,14 +89,14 @@
                                     <Upload size="20"
                                     />
                                 </button>
-                                <FileUpload v-if="isFileUploadVisible" :on-close="closeFileUpload" :currentChatId="currentChatId"/>
+                                <FileUpload v-if="isFileUploadVisible" :on-close="closeFileUpload" :currentChatId="currentChatId"     :onCollectionCreated="handleCollectionCreated"/>
                                 <button @click="isModelSettingsVisible = true"
                                         class="p-2 rounded-lg hover:bg-primary hover:text-accent">
                                     <Settings size="20"
                                     />
                                 </button>
-                                <ModelSettings 
-                                  v-if="isModelSettingsVisible" 
+                                <ModelSettings
+                                  v-if="isModelSettingsVisible"
                                   :on-close="closeModelSettings"
                                   v-model:temperature="temperature"
                                 />
@@ -158,7 +158,10 @@ export default {
         const isMenuOpen = ref(false);
         const isSending = ref(false);
         const temperature = ref(localStorage.getItem('temperature') / 100 || 0.8);
-
+        const chatCollectionParams = ref({
+            local_collection: null,
+            use_local_collection: false
+        });
         const handleTemperatureUpdate = (newTemperature) => {
             temperature.value = newTemperature;
         };
@@ -182,9 +185,14 @@ export default {
             currentModel.value = model;
         };
 
+        const handleCollectionCreated = (params) => {
+            chatCollectionParams.value = params;
+            console.log('Collection params updated for this chat:', chatCollectionParams.value);
+        };
+
         onMounted(async () => {
             try {
-                const response = await axios.get('/api/chats');
+                const response = await axios.get('/api/v1/chats');
                 chats.value = response.data;
 
                 if (currentChatId.value) {
@@ -198,9 +206,39 @@ export default {
         watch(currentChatId, (newChatId) => {
             if (!newChatId) {
                 messages.value = [];
+                chatCollectionParams.value = {
+                    local_collection: null,
+                    use_local_collection: false
+                };
+            }
+            else {
+                checkCollectionForCurrentChat();
             }
         });
 
+        const checkCollectionForCurrentChat = () => {
+          try {
+            const COLLECTIONS_STORAGE_KEY = 'chat_collections';
+            const storedCollections = localStorage.getItem(COLLECTIONS_STORAGE_KEY);
+
+            if (storedCollections && currentChatId.value) {
+              const collections = JSON.parse(storedCollections);
+              const chatCollection = collections[currentChatId.value];
+
+              if (chatCollection) {
+                chatCollectionParams.value = chatCollection;
+                console.log('Collection params loaded for chat:', currentChatId.value, chatCollectionParams.value);
+              } else {
+                chatCollectionParams.value = {
+                  local_collection: null,
+                  use_local_collection: false
+                };
+              }
+            }
+          } catch (error) {
+            console.error('Error checking collection for chat:', error);
+          }
+        };
 
         const sendMessage = async () => {
             if (!inputMessage.value.trim() || isSending.value) return;
@@ -211,11 +249,13 @@ export default {
             inputMessage.value = "";
 
             try {
-                const response = await axios.post('/api/chat', {
+                const response = await axios.post(`/api/v1/chats/${currentChatId.value}/messages`, {
                     messages: messages.value,
                     model: currentModel.value,
                     chatId: currentChatId.value,
-                    temperature: temperature.value
+                    temperature: temperature.value,
+                    use_local_collection: chatCollectionParams.value.use_local_collection,
+                    local_collection: chatCollectionParams.value.local_collection
                 });
 
                 const assistantMessage = response.data.message;
@@ -230,10 +270,12 @@ export default {
 
         const loadMessages = async (chatId) => {
             try {
-                const response = await axios.get(`/api/chats/${chatId}/messages`);
+                const response = await axios.get(`/api/v1/chats/${chatId}/messages`);
                 messages.value = response.data;
                 currentChatId.value = chatId;
                 localStorage.setItem('selectedChatId', chatId);
+
+                checkCollectionForCurrentChat();
             } catch (error) {
                 console.error("Error loading messages:", error);
             }
@@ -241,7 +283,7 @@ export default {
 
         const addChatHandler = async () => {
             try {
-                const response = await axios.post('/api/createChat');
+                const response = await axios.post('/api/v1/createChat');
                 chats.value.push(response.data);
                 const newChat = response.data;
                 currentChatId.value = newChat.id;
@@ -266,9 +308,11 @@ export default {
             loadMessages,
             chats,
             currentChatId,
+            chatCollectionParams,
             toggleMenu,
             isMenuOpen,
-            handleTemperatureUpdate
+            handleTemperatureUpdate,
+            handleCollectionCreated
         };
     },
     computed: {

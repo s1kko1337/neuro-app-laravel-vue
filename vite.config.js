@@ -11,6 +11,11 @@ export default defineConfig({
         host : true,
         port: 5173,
         origin : "http://127.0.0.1:5173" ,
+        cors: {
+            origin: ['http://127.0.0.1', 'http://localhost'],
+            methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+            credentials: true
+        },
     },
     plugins: [
         vue(),

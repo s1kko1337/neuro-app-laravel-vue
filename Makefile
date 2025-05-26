@@ -52,7 +52,7 @@ docker-logs:
 
 # Работа с php-cli (atrisan, composer)
 shell:
-	docker-compose -p neuro-laravel run --rm php-cli /bin/sh
+	docker-compose -p neuro run --rm php-cli /bin/sh
 # Работа с php-fpm
 php-fpm:
 	@docker exec -it php-fpm /bin/sh
