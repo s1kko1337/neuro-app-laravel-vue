@@ -1,135 +1,167 @@
 <template>
-    <div class="flex flex-col items-center justify-center">
-        <div class="w-full min-h-screen bg-primary">
-            <div class="flex w-full h-screen">
-                <!--Desktop menu -->
-                <div class="hidden lg:flex flex-col w-64 border rounded-3xl m-4 p-4 bg-secondary border-accent h-full">
-                    <div class="flex items-center justify-between mb-8">
-                        <button class="text-xl font-semibold color-primary hover:text-accent"
-                                @click="exitHandler">
+    <!-- Keeping only relevant sections for changes -->
+    <div class="flex w-full min-h-screen bg-primary">
+        <!-- Left sidebar - always visible on desktop -->
+        <div class="hidden lg:flex flex-col w-64 border rounded-3xl m-4 p-4 bg-secondary border-accent h-screen">
+            <div class="flex justify-between items-center px-4 py-2 color-primary">
+                <h1 class="text-xl font-semibold">Chat List</h1>
+                <ThemeToggle :theme="theme" :setTheme="setTheme"/>
+            </div>
+            <!-- Chat list component with fixed height and scrollable content -->
+            <div class="flex-1 overflow-hidden flex flex-col">
+                <ChatList
+                    :chats="chats"
+                    :activeChatId="currentChatId"
+                    :theme="theme"
+                    ref="desktopChatList"
+                    class="flex-1 overflow-y-auto"
+                    @chat-deleted="handleChatDeleted"
+                />
+            </div>
+            <!-- New chat button fixed at bottom -->
+            <div class="p-4 mt-2">
+                <button
+                    class="w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-lg text-white bg-blue-500 hover:bg-blue-600"
+                    @click="addChatHandler"
+                >
+                    <span>New Chat</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile menu - toggleable -->
+        <div v-if="isMenuOpen" class="fixed inset-0 z-50 flex lg:hidden">
+            <div class="fixed inset-0 bg-black bg-opacity-50" @click="toggleMenu"></div>
+            <div class="relative z-50 w-64 bg-secondary flex flex-col h-full">
+                <div class="flex items-center justify-between p-4 border-b border-primary">
+                    <span class="text-xl font-semibold color-primary">Menu</span>
+                    <button @click="toggleMenu" class="p-2">
+                        <span class="text-gray-900">✕</span>
+                    </button>
+                </div>
+                <div class="flex flex-col h-full">
+                    <div class="flex flex-row justify-between mb-2 p-4">
+                        <button class="text-xl font-semibold color-primary hover:bg-primary" @click="exitHandler">
                             Home
                         </button>
-                        <ThemeToggle theme="theme" setTheme="setTheme" />
+                        <ThemeToggle :theme="theme" :setTheme="setTheme"/>
                     </div>
-                    <div class="flex flex-col flex-1 justify-between overflow-hidden">
-                        <div class="overflow-y-auto flex-1">
-                            <ChatList :chats="chats" @select-chat="loadMessages" theme="theme" ref="ChatList" />
-                        </div>
-                        <div class="mt-4">
-                            <button
-                                class="flex items-center justify-center space-x-2 w-full px-4 py-2 rounded-lg text-gray-900 bg-accent hover:bg-blue-600"
-                                @click="addChatHandler"
-                            >
-                                <span>New chat</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <!--Mobile menu -->
-                <div v-if="isMenuOpen" class="fixed inset-0 z-50 flex">
-                    <div class="fixed inset-0 bg-black bg-opacity-50" @click="toggleMenu"></div>
-                    <div class="relative z-50 w-64 bg-secondary flex flex-col h-full">
-                        <div class="flex items-center justify-between p-4 border-b border-primary">
-                            <span class="text-xl font-semibold color-primary">Menu</span>
-                            <button @click="toggleMenu" class="p-2">
-                                <span class="text-gray-900">✕</span>
-                            </button>
-                        </div>
-                        <div class="flex flex-col flex-1 justify-between overflow-y-auto p-4">
-                            <div class="flex flex-row justify-between mb-2">
-                                <button class="text-xl font-semibold color-primary hover:bg-primary" @click="exitHandler">
-                                    Home
-                                </button>
-                                <ThemeToggle theme="theme" setTheme="setTheme" />
-                            </div>
-                            <div class="overflow-y-auto flex-1">
-                                <ChatList
-                                    :chats="chats"
-                                    :activeChatId="currentChatId"
-                                    @select-chat="loadMessages"
-                                    @close-menu="toggleMenu"
-                                    theme="theme"
-                                    ref="ChatList"
-                                />
-                            </div>
-                            <div class="mt-4">
-                                <button
-                                    class="flex items-center justify-center space-x-2 w-full px-4 py-2 rounded-lg text-gray-900 bg-accent hover:bg-blue-600 hover:text-primary"
-                                    @click="addChatHandler"
-                                >
-                                    <span>New chat</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flex-1 h-full flex flex-col border rounded-3xl m-4 p-4 border-accent" v-if="currentChatId">
-                    <div
-                        class="flex justify-between items-center px-4 py-2 color-primary "
-                    >
-                        <ModelSelector @model-selected="handleModelSelected"/>
-                        <button class="lg:hidden p-2 rounded-lg" @click="toggleMenu">
-                            <Menu size="20" />
-                        </button>
-                    </div>
-                    <div class="flex-1 overflow-y-auto p-4 max-w-70">
-                        <ChatMessage
-                            v-for="(msg, index) in filteredMessages"
-                            :key="index"
-                            :message="msg.content"
-                            :isAi="msg.role === 'assistant'"
+                    <!-- Mobile chat list with scrollable area -->
+                    <div class="flex-1 overflow-y-auto px-4">
+                        <ChatList
+                            ref="mobileChatList"
+                            :activeChatId="currentChatId"
+                            :chats="chats"
+                            :theme="theme"
+                            @close-menu="toggleMenu"
+                            @chat-deleted="handleChatDeleted"
                         />
                     </div>
-                    <div class="p-4 border bg-secondary rounded-3xl border-accent" v-if="currentChatId" >
-                        <div class="flex items-center space-x-2">
-                            <div>
-                                <button @click="isFileUploadVisible = true"
-                                        class="p-2 rounded-lg hover:bg-primary hover:text-accent">
-                                    <Upload size="20"
-                                    />
-                                </button>
-                                <FileUpload v-if="isFileUploadVisible" :on-close="closeFileUpload" :currentChatId="currentChatId"     :onCollectionCreated="handleCollectionCreated"/>
-                                <button @click="isModelSettingsVisible = true"
-                                        class="p-2 rounded-lg hover:bg-primary hover:text-accent">
-                                    <Settings size="20"
-                                    />
-                                </button>
-                                <ModelSettings
-                                  v-if="isModelSettingsVisible"
-                                  :on-close="closeModelSettings"
-                                  v-model:temperature="temperature"
-                                />
-                            </div>
-                            <input
-                                type="text"
-                                v-model="inputMessage"
-                                @keyup.enter="sendMessage"
-                                placeholder="Type your message..."
-                                class="flex-1 p-2 rounded-lg border  bg-primary border-secondary"
-                            />
-                            <button @click="sendMessage"
-                                    class="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
-                                <Send size="20"/>
-                            </button>
-                        </div>
+                    <!-- New chat button fixed at bottom of mobile menu -->
+                    <div class="p-4 border-t border-primary">
+                        <button
+                            class="flex items-center justify-center space-x-2 w-full px-4 py-2 rounded-lg text-gray-900 bg-accent hover:bg-blue-600 hover:text-primary"
+                            @click="addChatHandler"
+                        >
+                            <span>New chat</span>
+                        </button>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main content area (center) - always visible -->
+        <div class="flex-1 flex flex-col border rounded-3xl m-4 p-4 border-accent h-screen">
+            <!-- Header with menu toggle for mobile -->
+            <div class="flex justify-between items-center px-4 py-2 color-primary">
+                <div class="flex items-center space-x-2">
+                    <button class="lg:hidden p-2 rounded-lg" @click="toggleMenu">
+                        <Menu size="20"/>
+                    </button>
+                    <ModelSelector @model-selected="handleModelSelected"/>
+                </div>
+                <div v-if="currentChatId" class="text-sm">Chat #{{ currentChatId }}</div>
+            </div>
+
+            <!-- Empty state when no chat is selected -->
+            <div v-if="!currentChatId" class="flex-1 flex items-center justify-center overflow-y-auto">
+                <div class="text-center">
+                    <h2 class="text-xl font-semibold mb-4">Select a chat or start a new one</h2>
+                    <button
+                        class="px-4 py-2 bg-accent text-gray-900 rounded-lg hover:bg-blue-600"
+                        @click="addChatHandler"
+                    >
+                        New Chat
+                    </button>
+                </div>
+            </div>
+
+            <!-- Chat messages when a chat is selected with scrollable content -->
+            <div v-else class="flex-1 overflow-y-auto p-4">
+                <ChatMessage
+                    v-for="(msg, index) in filteredMessages"
+                    :key="index"
+                    :message="msg.content"
+                    :isAi="msg.role === 'assistant'"
+                />
+                <div v-if="filteredMessages.length === 0" class="flex items-center justify-center h-full text-gray-500">
+                    No messages yet. Start a conversation!
+                </div>
+            </div>
+
+            <!-- Message input area fixed at bottom -->
+            <div v-if="currentChatId" class="p-4 border bg-secondary rounded-3xl border-accent mt-2">
+                <div class="flex items-center space-x-2">
+                    <div>
+                        <button @click="isFileUploadVisible = true"
+                                class="p-2 rounded-lg hover:bg-primary hover:text-accent">
+                            <Upload size="20"/>
+                        </button>
+                        <FileUpload v-if="isFileUploadVisible" :on-close="closeFileUpload"
+                                    :currentChatId="currentChatId" :onCollectionCreated="handleCollectionCreated"/>
+                        <button @click="isModelSettingsVisible = true"
+                                class="p-2 rounded-lg hover:bg-primary hover:text-accent">
+                            <Settings size="20"/>
+                        </button>
+                        <ModelSettings
+                            v-if="isModelSettingsVisible"
+                            :on-close="closeModelSettings"
+                            v-model:temperature="temperature"
+                        />
+                    </div>
+                    <input
+                        type="text"
+                        v-model="inputMessage"
+                        @keyup.enter="sendMessage"
+                        placeholder="Type your message..."
+                        class="flex-1 p-2 rounded-lg border bg-primary border-secondary"
+                    />
+                    <button
+                        @click="sendMessage"
+                        :disabled="isSending"
+                        class="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
+                    >
+                        <Send size="20"/>
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 </template>
+
 <script>
-import {onMounted, ref, watch} from "vue";
-import { useRouter, useRoute } from 'vue-router';
+// Import statements remain the same
+import {onMounted, ref, watch, computed} from "vue";
+import {useRouter, useRoute} from 'vue-router';
 import ThemeToggle from "./ThemeToggle.vue";
 import ModelSelector from "./ModelSelector.vue";
 import ChatList from "./ChatList.vue";
 import ModelSettings from "./ModelSettings.vue";
 import FileUpload from "./FileUpload.vue";
 import ChatMessage from "./ChatMessage.vue";
-import {Upload, Send, Settings, Menu} from "lucide-vue-next";
+import {Upload, Send, Settings, Menu, MessageSquare} from "lucide-vue-next";
 import axios from "axios";
+import {useAuthStore} from "../stores/authStore.js";
 
 export default {
     name: 'Chat',
@@ -143,9 +175,11 @@ export default {
         FileUpload,
         ChatMessage,
         ModelSettings,
-        Menu
+        Menu,
+        MessageSquare
     },
     setup() {
+        const authStore = useAuthStore();
         const router = useRouter();
         const route = useRoute();
         const isFileUploadVisible = ref(false);
@@ -153,22 +187,49 @@ export default {
         const inputMessage = ref("");
         const messages = ref([]);
         const currentModel = ref("");
-        const currentChatId = ref(localStorage.getItem('selectedChatId') || null);
         const chats = ref([]);
         const isMenuOpen = ref(false);
         const isSending = ref(false);
         const temperature = ref(localStorage.getItem('temperature') / 100 || 0.8);
+        const theme = ref(localStorage.getItem('theme') || 'light');
         const chatCollectionParams = ref({
             local_collection: null,
             use_local_collection: false
         });
+
+        // Reference to chat list components
+        const desktopChatList = ref(null);
+        const mobileChatList = ref(null);
+
+        // Get chat ID from route params
+        const currentChatId = computed(() => route.params.chatId || null);
+
+        const setTheme = (newTheme) => {
+            theme.value = newTheme;
+            localStorage.setItem('theme', newTheme);
+        };
+
         const handleTemperatureUpdate = (newTemperature) => {
             temperature.value = newTemperature;
+        };
+
+        const handleChatDeleted = (data) => {
+            const {deletedChatId, updatedChats} = data;
+
+            // Update the chats array without reloading the page
+            if (Array.isArray(chats.value)) {
+                // Direct array format
+                chats.value = chats.value.filter(chat => chat.id !== deletedChatId);
+            } else if (chats.value && chats.value.data) {
+                // API response format
+                chats.value.data = chats.value.data.filter(chat => chat.id !== deletedChatId);
+            }
         };
 
         const closeModelSettings = () => {
             isModelSettingsVisible.value = false;
         };
+
         const closeFileUpload = () => {
             isFileUploadVisible.value = false;
         };
@@ -190,11 +251,20 @@ export default {
             console.log('Collection params updated for this chat:', chatCollectionParams.value);
         };
 
+        const navigateToChat = (chatId) => {
+            router.push(`/chat/${chatId}`);
+            if (isMenuOpen.value) {
+                toggleMenu();
+            }
+        };
+
         onMounted(async () => {
             try {
+                // Fetch all chats
                 const response = await axios.get('/api/v1/chats');
                 chats.value = response.data;
 
+                // If we have a chatId in the URL, load its messages
                 if (currentChatId.value) {
                     await loadMessages(currentChatId.value);
                 }
@@ -210,34 +280,34 @@ export default {
                     local_collection: null,
                     use_local_collection: false
                 };
-            }
-            else {
+            } else {
+                loadMessages(newChatId);
                 checkCollectionForCurrentChat();
             }
         });
 
         const checkCollectionForCurrentChat = () => {
-          try {
-            const COLLECTIONS_STORAGE_KEY = 'chat_collections';
-            const storedCollections = localStorage.getItem(COLLECTIONS_STORAGE_KEY);
+            try {
+                const COLLECTIONS_STORAGE_KEY = 'chat_collections';
+                const storedCollections = localStorage.getItem(COLLECTIONS_STORAGE_KEY);
 
-            if (storedCollections && currentChatId.value) {
-              const collections = JSON.parse(storedCollections);
-              const chatCollection = collections[currentChatId.value];
+                if (storedCollections && currentChatId.value) {
+                    const collections = JSON.parse(storedCollections);
+                    const chatCollection = collections[currentChatId.value];
 
-              if (chatCollection) {
-                chatCollectionParams.value = chatCollection;
-                console.log('Collection params loaded for chat:', currentChatId.value, chatCollectionParams.value);
-              } else {
-                chatCollectionParams.value = {
-                  local_collection: null,
-                  use_local_collection: false
-                };
-              }
+                    if (chatCollection) {
+                        chatCollectionParams.value = chatCollection;
+                        console.log('Collection params loaded for chat:', currentChatId.value, chatCollectionParams.value);
+                    } else {
+                        chatCollectionParams.value = {
+                            local_collection: null,
+                            use_local_collection: false
+                        };
+                    }
+                }
+            } catch (error) {
+                console.error('Error checking collection for chat:', error);
             }
-          } catch (error) {
-            console.error('Error checking collection for chat:', error);
-          }
         };
 
         const sendMessage = async () => {
@@ -245,7 +315,8 @@ export default {
 
             isSending.value = true;
 
-            messages.value.push({ role: "user", content: inputMessage.value });
+            messages.value.push({role: "user", content: inputMessage.value});
+            const userMessage = inputMessage.value;
             inputMessage.value = "";
 
             try {
@@ -259,36 +330,51 @@ export default {
                 });
 
                 const assistantMessage = response.data.message;
-                messages.value.push({ role: "assistant", content: assistantMessage });
+                messages.value.push({role: "assistant", content: assistantMessage});
             } catch (error) {
                 console.error("Error sending message:", error);
+                // Restore the message if there was an error
+                inputMessage.value = userMessage;
+                // Remove the last message from the array
+                messages.value.pop();
             } finally {
                 isSending.value = false;
             }
         };
 
-
         const loadMessages = async (chatId) => {
             try {
                 const response = await axios.get(`/api/v1/chats/${chatId}/messages`);
                 messages.value = response.data;
-                currentChatId.value = chatId;
-                localStorage.setItem('selectedChatId', chatId);
-
                 checkCollectionForCurrentChat();
             } catch (error) {
                 console.error("Error loading messages:", error);
             }
         };
 
+        // Modified method to update UI in real-time after adding a new chat
         const addChatHandler = async () => {
             try {
                 const response = await axios.post('/api/v1/createChat');
-                chats.value.push(response.data);
                 const newChat = response.data;
-                currentChatId.value = newChat.id;
-                localStorage.setItem('selectedChatId', newChat.id);
-                await loadMessages(newChat.id);
+
+                // Update the chats array in real-time
+                if (Array.isArray(chats.value)) {
+                    // Direct array format
+                    chats.value.push(newChat);
+                } else if (chats.value && chats.value.data) {
+                    // API response format
+                    chats.value.data.push(newChat);
+                } else {
+                    // Initialize if empty
+                    chats.value = [newChat];
+                }
+
+                // Navigate to the new chat
+                router.push(`/chat/${newChat.id}`);
+                if (isMenuOpen.value) {
+                    toggleMenu();
+                }
             } catch (error) {
                 console.error("Error creating chat:", error);
             }
@@ -312,7 +398,13 @@ export default {
             toggleMenu,
             isMenuOpen,
             handleTemperatureUpdate,
-            handleCollectionCreated
+            handleCollectionCreated,
+            navigateToChat,
+            theme,
+            setTheme,
+            isSending,
+            desktopChatList,
+            mobileChatList
         };
     },
     computed: {
@@ -322,3 +414,20 @@ export default {
     },
 };
 </script>
+
+<style scoped>
+/* Fixed height for main content containers */
+.h-screen {
+    height: calc(100vh - 2rem);
+}
+
+/* Smooth scrolling for better UX */
+.overflow-y-auto {
+    scroll-behavior: smooth;
+}
+
+/* Ensure message area doesn't push input field off screen */
+.flex-1.overflow-y-auto {
+    min-height: 0;
+}
+</style>

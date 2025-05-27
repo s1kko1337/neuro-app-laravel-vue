@@ -25,6 +25,8 @@ class AuthController extends Controller
         $role = Role::findByName('user');
         $user->assignRole($role);
 
+        event(new Registered($user));
+
         return response()->json([
             'user' => $user,
             'token' => $user->createToken("Token of user: {$user->name}")->plainTextToken,

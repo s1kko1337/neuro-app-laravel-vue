@@ -61,10 +61,13 @@ Route::prefix('v1')->middleware(['throttle:api', 'auth:sanctum', 'verified', 'ca
             return response()->json(['error' => 'Unable to fetch data'], 404);
         }
     });
-#Route::get('models', [\App\Services\OllamaService::class, 'getModels']);
+
     Route::get('chats', [ChatController::class, 'getChats']);
+
+    Route::delete('chats/{chatId}', [ChatController::class, 'destroy']);
+
     Route::post('createChat', [ChatController::class, 'addChat']);
-# Получение сообщений чата
+    # Получение сообщений чата
     Route::get('chats/{chatId}/messages', function($chatId) {
         // Используем переменную $chatId в URL
         $response = Http::get("http://python:8000/chats/{$chatId}/messages");
@@ -75,9 +78,9 @@ Route::prefix('v1')->middleware(['throttle:api', 'auth:sanctum', 'verified', 'ca
             return response()->json(['error' => 'Unable to fetch data'], $response->status());
         }
     });
-# Добавление сообщения в чат
+    # Добавление сообщения в чат
     Route::post('chats/{chatId}/messages', [ChatController::class, 'send_message'])->name('chats.send_message');
-# Получение сообщения чата
+    # Получение сообщения чата
     Route::get('chats/{chatId}/messages/{messageId}', function($chatId, $messageId) {
         // Используем переменную $chatId в URL
         $response = Http::get("http://python:8000/chats/{$chatId}/messages/{$messageId}");
@@ -88,7 +91,7 @@ Route::prefix('v1')->middleware(['throttle:api', 'auth:sanctum', 'verified', 'ca
             return response()->json(['error' => 'Unable to fetch data'], $response->status());
         }
     });
-# Работа с файлами
+    # Работа с файлами
     Route::post('/files/{chat_id}', [FileController::class, 'upload']);
     Route::get('/files/{chat_id}', [FileController::class, 'getFiles']);
     Route::get('/files/{chat_id}/{document_id}', [FileController::class, 'preview']);

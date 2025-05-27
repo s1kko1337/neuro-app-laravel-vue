@@ -1,3 +1,4 @@
+
 import {defineStore} from 'pinia';
 import axios from 'axios';
 
@@ -22,7 +23,8 @@ export const useAuthStore = defineStore('auth', {
     getters: {
         isAuthenticated: (state) => !!state.token,
         userEmail: (state) => state.user?.email,
-        isVerified: (state) => !!state.user?.email_verified_at
+        isVerified: (state) => !!state.user?.email_verified_at,
+        userId: (state) => state.user?.id
     },
 
     actions: {

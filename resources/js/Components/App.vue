@@ -1,3 +1,4 @@
+
 <template>
     <div class="w-full min-h-screen bg-primary flex flex-col">
         <div
@@ -11,13 +12,9 @@
                 <p class="text-xl text-gray-900">
                     Your intelligent conversation partner powered by advanced AI
                 </p>
-                <router-link to="/chat">
-                    <div
-                        class="px-8 py-3 mt-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-lg"
-                    >
-                        Start Chatting
-                    </div>
-                </router-link>
+                <button @click="navigateToChat" class="px-8 py-3 mt-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-lg">
+                    Start Chatting
+                </button>
             </div>
         </div>
 
@@ -51,18 +48,31 @@ export default {
         const initializing = ref(true);
         const isScrolled = ref(false);
 
-    // Обработчик прокрутки страницы
+        // Обработчик прокрутки страницы
         const handleScroll = () => {
             isScrolled.value = window.scrollY > 50;
         };
 
-    // Обработчик выхода из системы
+        // Обработчик выхода из системы
         const handleLogout = async () => {
             await authStore.logout();
             router.push({name: 'login'});
         };
 
-    // Перенаправление на требуемую страницу в зависимости от аутентификации
+        // Function to navigate to chat with user ID
+        const navigateToChat = async () => {
+            if (!authStore.initialized) {
+                await authStore.initialize();
+            }
+
+            if (authStore.isAuthenticated) {
+                router.push(`/chat/${authStore.userId}`);
+            } else {
+                router.push('/login');
+            }
+        };
+
+        // Перенаправление на требуемую страницу в зависимости от аутентификации
         const redirectIfNeeded = async () => {
             const currentRoute = router.currentRoute.value;
 
@@ -128,6 +138,8 @@ export default {
 
         return {
             currentRouter,
+            navigateToChat,
+            handleLogout
         }
     }
 }
