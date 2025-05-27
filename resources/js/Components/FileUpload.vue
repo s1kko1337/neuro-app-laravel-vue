@@ -75,20 +75,20 @@ export default {
     },
     setup(props) {
         const fileInput = ref(null);
-        const uploadedFiles = ref([]); 
+        const uploadedFiles = ref([]);
         const collectionInfo = ref(null);
         const COLLECTIONS_STORAGE_KEY = 'chat_collections';
-        
+
         const triggerFileInput = async () => {
             fileInput.value.click();
         };
-        
+
         onMounted(async () => {
             await fetchFiles();
-            
+
             loadCollectionInfo();
         });
-        
+
         const loadCollectionInfo = () => {
         try {
             const storedCollections = localStorage.getItem(COLLECTIONS_STORAGE_KEY);
@@ -107,16 +107,16 @@ export default {
                     console.error('Error loading collection info from localStorage:', error);
             }
         };
-        
+
         const saveCollectionInfo = (collectionData) => {
             try {
                 const storedCollections = localStorage.getItem(COLLECTIONS_STORAGE_KEY);
                 const collections = storedCollections ? JSON.parse(storedCollections) : {};
-                
+
                 collections[props.currentChatId] = collectionData;
-                
+
                 localStorage.setItem(COLLECTIONS_STORAGE_KEY, JSON.stringify(collections));
-                
+
                 collectionInfo.value = collectionData;
             } catch (error) {
                 console.error('Error saving collection info to localStorage:', error);
@@ -126,7 +126,7 @@ export default {
         const fetchFiles = async () => {
             try {
                 // Получение массива файлов.
-                let response = await axios.get(`/api/files/${props.currentChatId}`);
+                let response = await axios.get(`/api/v1/files/${props.currentChatId}`);
                 if (response.data && response.data.documents) {
                     // Преобразуем в массив объектов
                     uploadedFiles.value = response.data.documents.map(doc => ({
@@ -156,7 +156,7 @@ export default {
                 }
 
                 try {
-                    const response = await axios.post(`/api/files/${props.currentChatId}`, formData, {
+                    const response = await axios.post(`/api/v1/files/${props.currentChatId}`, formData, {
                         headers: {
                             'Content-Type': 'multipart/form-data',
                         },
@@ -171,19 +171,19 @@ export default {
 
         const deleteFile = async (file) => {
             try {
-                let response = await axios.delete(`/api/files/${props.currentChatId}/${file.id}`)
-                let collection_response = await axios.delete(`/api/collection/${props.currentChatId}`)
-                
+                let response = await axios.delete(`/api/v1/files/${props.currentChatId}/${file.id}`)
+                let collection_response = await axios.delete(`/api/v1/collection/${props.currentChatId}`)
+
                 if (collection_response.status === 200 || collection_response.status === 204) {
                     removeCollectionInfo();
                 }
-                
+
                 await fetchFiles();
             } catch (e) {
                 console.log(e.message)
             }
         }
-        
+
         const removeCollectionInfo = () => {
             try {
                 const storedCollections = localStorage.getItem(COLLECTIONS_STORAGE_KEY);
@@ -203,12 +203,12 @@ export default {
         const createCollection = async () => {
             try {
                 // Create the collection
-                const response = await axios.post('/api/collection/create', {
+                const response = await axios.post('/api/v1/collection/create', {
                     chat_id: parseInt(props.currentChatId)
                 });
-                
+
                 console.log('Collection created:', response.data.collection);
-                
+
                 const collectionName = `collection-${props.currentChatId}`;
                 const collectionParams = {
                     use_local_collection: true,
@@ -216,11 +216,11 @@ export default {
                     collection_id: response.data.collection.id,
                     created_at: new Date().toISOString()
                 };
-                
+
                 saveCollectionInfo(collectionParams);
-                
+
                 props.onCollectionCreated(collectionParams);
-                
+
                 props.onClose();
             } catch (error) {
                 console.error('Error creating collection:', error);
@@ -233,7 +233,7 @@ export default {
 
         const previewFile = async (file) => {
             try {
-                let response = await axios.get(`/api/files/${props.currentChatId}/${file.id}`, {
+                let response = await axios.get(`/api/v1/files/${props.currentChatId}/${file.id}`, {
                     responseType: 'blob', // Указываем, что ожидаем бинарные данные
                 });
 
@@ -276,7 +276,7 @@ export default {
             }
         };
 
-        
+
         return {
             fileInput,
             uploadedFiles,

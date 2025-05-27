@@ -1,3 +1,4 @@
+
 import { createRouter, createWebHistory } from 'vue-router';
 import Register from '../Components/Auth/Register.vue';
 import Login from '../Components/Auth/Login.vue';
@@ -13,8 +14,6 @@ import Contact from "../Components/Contact.vue";
 import About from "../Components/About.vue";
 import Chat from "../Components/Chat.vue";
 
-
-
 const routes = [
     {
         path: '/',
@@ -22,8 +21,17 @@ const routes = [
         component: App,
     },
     {
-        path: '/chat/:chatId?',
-        name: 'Chat',
+        path: '/chat',
+        name: 'ChatList',
+        component: Chat,
+        meta: {
+            requiresAuth: true,
+            requiresVerification: true
+        }
+    },
+    {
+        path: '/chat/:chatId',
+        name: 'ChatDetail',
         component: Chat,
         meta: {
             requiresAuth: true,

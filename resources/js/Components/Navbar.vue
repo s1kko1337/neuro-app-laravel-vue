@@ -1,3 +1,4 @@
+
 <template>
     <nav class="w-full bg-secondary border-b">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ">
@@ -24,7 +25,7 @@
                         </div>
                     </router-link>
                     <ThemeToggle />
-                    </div>
+                </div>
             </div>
         </div>
     </nav>
@@ -32,15 +33,14 @@
 
 <script>
 import { useRouter } from 'vue-router';
-import {computed} from "vue";
+import { computed } from "vue";
 import ThemeToggle from "./ThemeToggle.vue";
 
 export default {
     name: 'Navbar',
-    components: {ThemeToggle},
+    components: { ThemeToggle },
     setup() {
         const router = useRouter();
-
         const currentRouter = computed(() => router.currentRoute.value.path);
 
         return {
@@ -49,3 +49,4 @@ export default {
     }
 }
 </script>
+
