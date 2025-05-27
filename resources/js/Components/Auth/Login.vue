@@ -140,7 +140,7 @@ const handleLogin = async () => {
         });
 
         if (success) {
-            await router.push({name: 'personalOffice'});
+            await router.push({name: 'chat'});
         }
     } catch (error) {
         console.error('Login component error:', error);
