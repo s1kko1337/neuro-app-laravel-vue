@@ -24,6 +24,11 @@
                             Contact
                         </div>
                     </router-link>
+                    <router-link v-if="needSurvey" to="/chat-survey">
+                        <div class="text-xl font-bold text-gray-900 hover:text-accent">
+                            Пройти опрос
+                        </div>
+                    </router-link>
                     <ThemeToggle />
                 </div>
             </div>
@@ -33,7 +38,7 @@
 
 <script>
 import { useRouter } from 'vue-router';
-import { computed } from "vue";
+import {computed, onMounted, ref} from "vue";
 import ThemeToggle from "./ThemeToggle.vue";
 
 export default {
@@ -41,6 +46,13 @@ export default {
     components: { ThemeToggle },
     setup() {
         const router = useRouter();
+        const needSurvey = ref(false);
+
+        onMounted(async () => {
+            const response = await axios.get('/api/survey')
+            needSurvey.value = response.data
+        })
+
         const currentRouter = computed(() => router.currentRoute.value.path);
 
         return {

@@ -22,7 +22,7 @@ class UserSurveyChatMessagesController extends Controller
      */
     public function survey()
     {
-        return UserSurveyChatMessages::find('user_id', auth()->id());
+        return UserSurveyChatMessages::find('user_id', auth()->id())->is_final;
     }
 
     /**Добавление сообщения пользователем
