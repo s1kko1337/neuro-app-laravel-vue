@@ -1,6 +1,6 @@
 <?php
 
-use Illuminate\Routing\Route;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/chat/history', [\App\Http\Controllers\Voice\UserSurveyChatMessagesController::class, 'history']);
 
