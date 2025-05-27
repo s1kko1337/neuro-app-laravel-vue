@@ -30,6 +30,15 @@ const routes = [
         }
     },
     {
+        path: '/chat-survey',
+        name: 'ChatSurvey',
+        component: () => import('../Components/Voice/ChatSurvey.vue'),
+        meta: {
+            requiresAuth: true,
+            requiresVerification: true
+        }
+    },
+    {
         path: '/chat/:chatId',
         name: 'ChatDetail',
         component: Chat,
