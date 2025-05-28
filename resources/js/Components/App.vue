@@ -1,4 +1,3 @@
-
 <template>
     <div class="w-full min-h-screen bg-primary flex flex-col">
         <div
@@ -12,7 +11,8 @@
                 <p class="text-xl text-gray-900">
                     Your intelligent conversation partner powered by advanced AI
                 </p>
-                <button @click="navigateToChat" class="px-8 py-3 mt-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-lg">
+                <button @click="navigateToChat"
+                        class="px-8 py-3 mt-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-lg">
                     Start Chatting
                 </button>
             </div>
@@ -80,7 +80,7 @@ export default {
             // перенаправляем на страницу GET
             if (authStore.isAuthenticated &&
                 (currentRoute.name === 'login' || currentRoute.name === 'register')) {
-                router.push({name: 'get'});
+                router.push({name: 'chat'});
             }
 
             // Если пользователь не авторизован и пытается получить доступ к защищенным маршрутам

@@ -21,9 +21,9 @@
                 <h3 class="text-xl font-bold">Почта подтверждена!</h3>
             </div>
             <p class="mb-4">Ваш адрес электронной почты подтвержден. Вы можете использовать все функции приложения.</p>
-            <button @click="redirectToDashboard"
+            <button @click="redirectToChat"
                     class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50">
-                Перейти в панель управления
+                Перейти к чатам
             </button>
         </div>
 
@@ -185,8 +185,8 @@ const resendVerification = async () => {
 };
 
 // Перенаправление в панель управления
-const redirectToDashboard = () => {
-    router.push({ name: 'Main' });
+const redirectToChat = () => {
+    router.push({ name: 'chats' });
 };
 
 // Перенаправление на страницу входа
