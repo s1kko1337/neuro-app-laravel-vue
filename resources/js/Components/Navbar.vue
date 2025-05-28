@@ -29,6 +29,27 @@
                             Пройти опрос
                         </div>
                     </router-link>
+                    <template v-if="!authStore.isAuthenticated">
+                        <router-link
+                            :to="{name:'register'}"
+                            class="text-xl font-bold text-gray-900 hover:text-accent"
+                        >Регистрация
+                        </router-link>
+                        <router-link
+                            :to="{name:'login'}"
+                            class="text-xl font-bold text-gray-900 hover:text-accent"
+                        >Войти
+                        </router-link>
+                    </template>
+
+                    <!-- Кнопки для авторизованных пользователей -->
+                    <template v-else>
+                        <button
+                            @click="handleLogout"
+                            class="text-xl font-bold text-gray-900 hover:text-accent"
+                        >Выход
+                        </button>
+                    </template>
                     <ThemeToggle />
                 </div>
             </div>
@@ -40,6 +61,7 @@
 import { useRouter } from 'vue-router';
 import {computed, onMounted, ref} from "vue";
 import ThemeToggle from "./ThemeToggle.vue";
+import {useAuthStore} from "../stores/authStore.js";
 
 export default {
     name: 'Navbar',
@@ -47,17 +69,22 @@ export default {
     setup() {
         const router = useRouter();
         const needSurvey = ref(true);
-
+        const authStore = useAuthStore();
         onMounted(async () => {
             const response = await axios.get('/api/v1/survey')
             needSurvey.value = response.data
         })
 
         const currentRouter = computed(() => router.currentRoute.value.path);
-
+        const handleLogout = async () => {
+            await authStore.logout();
+            await router.push({name: 'Main'});
+        };
         return {
             currentRouter,
-            needSurvey
+            handleLogout,
+            needSurvey,
+            authStore
         };
     }
 }

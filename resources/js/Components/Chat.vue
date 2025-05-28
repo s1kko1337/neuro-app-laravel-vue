@@ -9,11 +9,6 @@
                     class="text-xl font-semibold"
                 >На главную
                 </router-link>
-                <button
-                    @click="handleLogout"
-                    class="text-xl font-semibold"
-                >Выход
-                </button>
                 <ThemeToggle :theme="theme" :setTheme="setTheme"/>
             </div>
             <!-- Chat list component with fixed height and scrollable content -->
@@ -252,10 +247,6 @@ export default {
             await router.push('/');
         };
 
-        const handleLogout = async () => {
-            await authStore.logout();
-            await router.push({name: 'Main'});
-        };
         const handleModelSelected = (model) => {
             currentModel.value = model;
         };
@@ -419,7 +410,6 @@ export default {
             isSending,
             desktopChatList,
             mobileChatList,
-            handleLogout,
             handleChatDeleted
         };
     },
