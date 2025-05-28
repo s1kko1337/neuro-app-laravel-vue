@@ -46,17 +46,18 @@ export default {
     components: { ThemeToggle },
     setup() {
         const router = useRouter();
-        const needSurvey = ref(false);
+        const needSurvey = ref(true);
 
         onMounted(async () => {
-            const response = await axios.get('/api/survey')
+            const response = await axios.get('/api/v1/survey')
             needSurvey.value = response.data
         })
 
         const currentRouter = computed(() => router.currentRoute.value.path);
 
         return {
-            currentRouter
+            currentRouter,
+            needSurvey
         };
     }
 }

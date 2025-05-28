@@ -57,7 +57,7 @@ class UserSurveyChatMessagesController extends Controller
                     'language' => $validatedData['language'],
                     'tts_provider' => $validatedData['tts_provider']
                 ]);
-                $botResponse = UserSurveyChatMessages::where('is_bot', true)->latest()->first();
+                //$botResponse = UserSurveyChatMessages::where('is_bot', true)->latest()->first();
 
                 if (!$botResponse || !$botResponse->audio_path) {
                     throw new \RuntimeException('Failed to generate audio response');

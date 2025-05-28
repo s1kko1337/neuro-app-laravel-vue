@@ -2,7 +2,7 @@
 <template>
     <div class="w-full min-h-screen bg-primary flex flex-col">
         <div
-            :class="[currentRouter !== '/' && currentRouter !== '/about' && currentRouter !== '/contact' ? 'hidden' : '']">
+            :class="[currentRouter !== '/' && currentRouter !== '/about' && currentRouter !== '/contact' && currentRouter !== '/chat-survey' ? 'hidden' : '']">
             <Navbar/>
         </div>
         <div :class="['flex flex-1 items-center justify-center', currentRouter !== '/' ? 'hidden' : '']">

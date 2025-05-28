@@ -169,7 +169,7 @@ const toggleChat = () => {
 
 const loadHistory = async () => {
     try {
-        const response = await axios.get('/api/chat/history');
+        const response = await axios.get('/api/v1/chat/history');
         chatHistory.value = response.data.data.reverse();
     } catch (e) {
         errorMessage.value = 'Ошибка загрузки истории';
@@ -255,7 +255,7 @@ const toggleAudio = async (message) => {
             audioElement.pause();
         }
 
-        const audioUrl = `/api/${message.audio_path}`;
+        const audioUrl = `/api/v1/${message.audio_path}`;
 
         const response = await axios.get(audioUrl, {
             responseType: 'blob'
@@ -314,7 +314,7 @@ const sendTextMessage = async () => {
             audio_url: null
         });
 
-        const response = await axios.post('/api/survey', {
+        const response = await axios.post('/api/v1/survey', {
             content: userMessageContent,
             language: selectedLanguage.value,
             tts_provider: selectedProvider.value,

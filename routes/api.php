@@ -100,7 +100,7 @@ Route::prefix('v1')->middleware(['throttle:api', 'auth:sanctum', 'verified', 'ca
 
     Route::post('/collection/create', [GenerateContextController::class, 'create']);
     Route::delete('/collection/{chat_id}', [GenerateContextController::class, 'delete']);
-});
 
-// Маршруты для работы с опросом пользователя
-require __DIR__.'/survey_chat_api.php';
+    // Маршруты для работы с опросом пользователя
+    require __DIR__.'/survey_chat_api.php';
+});
