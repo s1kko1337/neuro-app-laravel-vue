@@ -152,7 +152,7 @@ router.beforeEach(async (to, from, next) => {
 
     // Если пользователь авторизован и пытается перейти на страницу входа или регистрации
     if (authStore.isAuthenticated && (to.name === 'login' || to.name === 'register')) {
-        next({ name: 'Main' });
+        next({ name: 'ChatList' });
         return;
     }
 

@@ -140,7 +140,7 @@ const handleLogin = async () => {
         });
 
         if (success) {
-            await router.push({name: 'chat'});
+            await router.push({name: 'ChatList'});
         }
     } catch (error) {
         console.error('Login component error:', error);
