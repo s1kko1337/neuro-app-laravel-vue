@@ -80,7 +80,7 @@ export default {
             // перенаправляем на страницу GET
             if (authStore.isAuthenticated &&
                 (currentRoute.name === 'login' || currentRoute.name === 'register')) {
-                router.push({name: 'chat'});
+                router.push({name: 'ChatList'});
             }
 
             // Если пользователь не авторизован и пытается получить доступ к защищенным маршрутам
