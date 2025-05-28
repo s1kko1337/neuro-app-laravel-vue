@@ -24,7 +24,11 @@ class UserSurveyChatMessagesController extends Controller
      */
     public function survey()
     {
-        return UserSurveyChatMessages::find('user_id', auth()->id())->is_final;
+        $isFinal = UserSurveyChatMessages::where('user_id', auth()->id())->value('is_final');
+        if($isFinal) {
+            return false;
+        }
+        return true;
     }
 
     /**Добавление сообщения пользователем

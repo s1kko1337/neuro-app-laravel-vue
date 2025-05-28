@@ -25,7 +25,7 @@
             <div class="flex space-x-4">
                 <button @click="redirectToDashboard"
                         class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50">
-                    Перейти в панель управления
+                    Перейти в чаты
                 </button>
                 <button @click="redirectToHome"
                         class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">
@@ -165,7 +165,7 @@ onMounted(async () => {
 
 // Перенаправление в панель управления
 const redirectToDashboard = () => {
-    router.push({ name: 'Chat' });
+    router.push({ name: 'ChatList' });
 };
 
 // Перенаправление на страницу входа

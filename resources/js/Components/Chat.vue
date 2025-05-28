@@ -4,7 +4,11 @@
         <!-- Left sidebar - always visible on desktop -->
         <div class="hidden lg:flex flex-col w-64 border rounded-3xl m-4 p-4 bg-secondary border-accent h-screen">
             <div class="flex justify-between items-center px-4 py-2 color-primary">
-                <h1 class="text-xl font-semibold">Chat List</h1>
+                <router-link
+                    :to="{name:'Main'}"
+                    class="text-xl font-semibold"
+                >На главную
+                </router-link>
                 <ThemeToggle :theme="theme" :setTheme="setTheme"/>
             </div>
             <!-- Chat list component with fixed height and scrollable content -->
@@ -226,6 +230,7 @@ export default {
             }
         };
 
+
         const closeModelSettings = () => {
             isModelSettingsVisible.value = false;
         };
@@ -404,7 +409,8 @@ export default {
             setTheme,
             isSending,
             desktopChatList,
-            mobileChatList
+            mobileChatList,
+            handleChatDeleted
         };
     },
     computed: {
