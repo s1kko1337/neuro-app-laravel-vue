@@ -79,7 +79,10 @@ class ChatController extends Controller
         }
 
         // Отправка POST-запроса на FastAPI
-        $response = Http::post("http://python:8000/chats/{$chatId}/messages", [
+        $pythonHost = config('services.python_api.host');
+        $pythonPort = config('services.python_api.port');
+        $url = "http://{$pythonHost}:{$pythonPort}/chats/{$chatId}/messages";
+        $response = Http::post($url, [
             'messages' => $validatedData['messages'],
             'system_prompt' => "
                 Always answer in Russian.
@@ -120,19 +123,21 @@ class ChatController extends Controller
     {
         try {
             $chat = Chat::query()->findOrFail($chatId);
-
-            $res = Http::get("http://python:8000/files/{$chatId}")->json();
+            $pythonHost = config('services.python_api.host');
+            $pythonPort = config('services.python_api.port');
+            $url = "http://{$pythonHost}:{$pythonPort}/files/{$chatId}";
+            $res = Http::get($url)->json();
             $messages = [];
 
             if (!empty($res) && isset($res["documents"])) {
                 foreach ($res["documents"] as $file) {
-                    $response = Http::delete("http://python:8000/files/{$chatId}/{$file["id"]}")->throw();
+                    $response = Http::delete($url . "/{$file["id"]}")->throw();
                     $messages[] = $response->json();
                 }
             }
 
             $coll_name = 'collection-' . $chatId;
-            $response = Http::delete("http://python:8000/chroma/collections/" . $coll_name);
+            $response = Http::delete("http://{$pythonHost}:{$pythonPort}/chroma/collections/" . $coll_name);
             $messages[] = $response->json();
             \Log::info($messages);
 

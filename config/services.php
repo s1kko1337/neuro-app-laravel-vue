@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'python_api' => [
+        'host' => env('PYTHON_API_HOST', 'python'),
+        'port' => env('PYTHON_API_PORT', 8000),
+    ],
 ];

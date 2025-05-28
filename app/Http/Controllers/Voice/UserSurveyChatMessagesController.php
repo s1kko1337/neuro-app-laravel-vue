@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Voice;
 use App\Http\Controllers\Controller;
 use App\Models\UserSurveyChatMessages;
 use App\Services\AudioService;
+use App\Services\OllamaService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -13,7 +14,8 @@ use Illuminate\Support\Facades\Storage;
 class UserSurveyChatMessagesController extends Controller
 {
     public function __construct(
-        private AudioService $audioService
+        private AudioService $audioService,
+        private OllamaService $ollamaService,
     ) {}
 
     /**Отображение страницы опроса
@@ -32,13 +34,13 @@ class UserSurveyChatMessagesController extends Controller
         $validatedData = $request->validate([
             'content' => 'required|string',
             'language' => 'required|string|in:en-US,ru-RU,de-DE',
-            'tts_provider' => 'sometimes|string|in:espeak,yandex'
+            'tts_provider' => 'sometimes|string|in:espeak,yandex',
+            // УКАЗАТЬ МОДЕЛЬ
+            'model' => 'string|in:qwen2.5:3b'
         ]);
 
-        $message = null;
-
         try {
-            DB::transaction(function () use ($validatedData, &$userMessage, &$botResponse) {
+            [$userMessage, $botResponse] = DB::transaction(function () use ($validatedData) {
                 // Сохраняем сообщение пользователя
                 $userMessage = UserSurveyChatMessages::create([
                     'user_id' => auth()->id(),
@@ -47,21 +49,42 @@ class UserSurveyChatMessagesController extends Controller
                     'message_type' => 'user'
                 ]);
 
-                dd("Необходимо продумать ответ (response) модели. UserSurveyChatMessagesController");
+                // Получаем историю диалога для контекста
+                $chatHistory = UserSurveyChatMessages::where('user_id', auth()->id())
+                    ->orderBy('created_at', 'asc')
+                    ->get()
+                    ->toArray();
 
-                // Генерируем ответ бота
-                $response = "Ответ бота";
+                // Формируем промпт для Ollama
+                $prompt = $this->ollamaService->buildPrompt($chatHistory, $validatedData['content']);
+
+                // Отправляем запрос к Ollama
+//                $ollamaResponse = $this->ollamaService->callOllama($prompt, $validatedData['model']); // или сделать config('survey.model');
+                $ollamaResponse = $this->ollamaService->callOllama($prompt, "qwen2.5:3b");
+
+                // Парсим ответ Ollama
+                $responseContent = $ollamaResponse['message']['content'];
+                $isFinal = $ollamaResponse['is_final'] ?? false;
+
+                if ($isFinal)
+                {
+                    $this->ollamaService->generateParameters($chatHistory, "qwen2.5:3b");
+                }
+
                 // Генерируем аудио ответ согласно content
                 $botResponse = $this->botStore([
-                    'content' => $response,
+                    'content' => $responseContent,
                     'language' => $validatedData['language'],
-                    'tts_provider' => $validatedData['tts_provider']
+                    'tts_provider' => $validatedData['tts_provider'] ?? 'espeak',
+                    'is_final' => $isFinal,
+                    'message_type' => 'bot'
                 ]);
-                //$botResponse = UserSurveyChatMessages::where('is_bot', true)->latest()->first();
 
-                if (!$botResponse || !$botResponse->audio_path) {
+                if (!$botResponse || !isset($botResponse->audio_path)) {
                     throw new \RuntimeException('Failed to generate audio response');
                 }
+
+                return [$userMessage, $botResponse];
             });
 
             return response()->json([
@@ -81,7 +104,6 @@ class UserSurveyChatMessagesController extends Controller
             ], 500);
         }
     }
-
     /**Получение истории сообщений
      */
     public function history()
