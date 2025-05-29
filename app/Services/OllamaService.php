@@ -5,6 +5,7 @@ use App\Models\Chat;
 use Cloudstudio\Ollama\Facades\Ollama;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use App\Models\Message;
 use App\Models\Embedding;
@@ -97,26 +98,26 @@ class OllamaService
                 'role' => 'system',
                 'content' => "Всегда отвечай на русском языке, вот необходимый контекст для твоего ответа. Контекст:\n" . $context .".\n. Если ты не умеешь думать на русском языке, думай на другом языке но отвечай на русском.Свой ответ давай на русском языке! Свой ответ переведи на русский."
             ];
-    
+
             array_unshift($messages, $systemMessage);
-    
+
             Log::info('Request data:', [
                 'messages' => $messages,
                 'model' => $model,
                 'chatId' => $chatId,
                 'temperature' => $temperature
             ]);
-    
+
             $response = Ollama::agent('Ты отвечаешь только по-русски! Если вопрос задан не на русском языке, все равно отвечай на русском!')
                 ->model($model)
                 ->chat($messages);
-    
+
             Log::info('Ollama response:', $response);
         } else {
             $helperMessage = Ollama::agent('Ты эксперт в русском языке.')
             ->prompt("Всегда отвечай на русском языке, вот необходимый контекст для твоего ответа. Вопрос: $lastUserMessageText \n
             Контекст:\n" . $context .".\n Задай 5 вопросов на русском языке, уточняющих вопрос пользователя и
-            учитывающих переданный контекст, на базе этих вопросов строй свой ответ. 
+            учитывающих переданный контекст, на базе этих вопросов строй свой ответ.
             В ответ давай только уточняющие вопросы на русском языке!")
             ->model($model)
             ->stream(false)
@@ -126,8 +127,8 @@ class OllamaService
 
             $systemMessage = [
                 'role' => 'system',
-                'content' => "Всегда отвечай на русском языке. 
-                На базе этих вопросов и уточнений:(\n" . $helperResponse ."),\n составь свой точный ответ на заданный вопрос пользователя, в формате связанного текста, а не прямых ответов на вопросы. Вопрос пользователя: $lastUserMessageText. 
+                'content' => "Всегда отвечай на русском языке.
+                На базе этих вопросов и уточнений:(\n" . $helperResponse ."),\n составь свой точный ответ на заданный вопрос пользователя, в формате связанного текста, а не прямых ответов на вопросы. Вопрос пользователя: $lastUserMessageText.
                 Свой ответ давай на русском языке! Свой ответ переведи на русский."
             ];
 
@@ -264,5 +265,79 @@ class OllamaService
             }
         }
         return null;
+    }
+
+    /**Запрос к LLM для опроса пользователя
+     *
+     */
+    public function buildPrompt(array $chatHistory, string $newMessage): string
+    {
+        $systemPrompt = <<<PROMPT
+            You are conducting a friendly survey to learn about a person's hobbies and interests.
+            Your goal is to identify at least 3 main hobbies or interests of the user.
+            Ask questions one at a time and analyze the responses.
+            When you have enough information, summarize the hobbies and mark the conversation as complete.
+
+            Rules:
+            1. Be friendly and conversational
+            2. Ask open-ended questions
+            3. Don't ask more than 5 questions total
+            4. When you have identified 3 hobbies or when the user seems disinterested, end the conversation
+            5. In your final message, summarize the hobbies and add "IS_FINAL: true"
+
+            Current conversation:
+        PROMPT;
+
+        $conversation = '';
+        foreach ($chatHistory as $message) {
+            $conversation .= "{$message['role']}: {$message['content']}\n";
+        }
+
+        return $systemPrompt . $conversation . "user: {$newMessage}\nassistant:";
+    }
+
+    /**Ведение опроса пользователя
+     *
+     */
+    public function callOllama(string $prompt, string $model): array
+    {
+        $client = new \GuzzleHttp\Client();
+        $pythonHost = config("services.python_api.host");
+        $pythonPort = config("services.python_api.port");
+
+        dd("Определить маршрут для чата без chatId");
+
+        $url = "http://{$pythonHost}:{$pythonPort}/chat";
+        $response = Http::post($url, [
+            'json' => [
+                'model' => $model,
+                'messages' => [
+                    ['role' => 'system', 'content' => $prompt]
+                ],
+                'temperature' => 0.7
+            ]
+        ]);
+
+        $responseData = json_decode($response->getBody(), true);
+
+        // Парсим ответ на предмет флага завершения
+        $isFinal = str_contains($responseData['message']['content'], 'IS_FINAL: true');
+        $content = str_replace('IS_FINAL: true', '', $responseData['message']['content']);
+
+        return [
+            'message' => ['content' => trim($content)],
+            'is_final' => $isFinal
+        ];
+    }
+
+    public function generateParameters(string $chatHistory, string $model)
+    {
+        dd ("Определить маршрут для генерации параметров пользователя: post /user-params");
+        $url = "http://{$pythonHost}:{$pythonPort}/user-params";
+        $response = Http::post($url, [
+            'model' => $model,
+            'messages' => $chatHistory,
+            'temperature' => 0.7
+        ]);
     }
 }

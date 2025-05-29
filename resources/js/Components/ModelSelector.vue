@@ -1,6 +1,6 @@
 <template>
     <select
-        class="w-48 p-2 rounded-lg border bg-accent border-secondary text-gray-900"
+        class="w-48 p-2 rounded-lg border bg-gradient-to-br from-indigo-50 via-white to-blue-50 border-indigo-200 text-gray-800 shadow-sm hover:shadow-md transition-all duration-300 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-200 outline-none"
         @change="selectModelHandler"
     >
         <option

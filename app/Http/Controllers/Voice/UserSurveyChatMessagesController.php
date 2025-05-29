@@ -3,8 +3,11 @@
 namespace App\Http\Controllers\Voice;
 
 use App\Http\Controllers\Controller;
-use App\Models\UserSurveyChatMessages;
+use App\Models\AudioMessage;
+use App\Models\Chat;
+use App\Models\Message;
 use App\Services\AudioService;
+use App\Services\OllamaService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -13,7 +16,8 @@ use Illuminate\Support\Facades\Storage;
 class UserSurveyChatMessagesController extends Controller
 {
     public function __construct(
-        private AudioService $audioService
+        private AudioService $audioService,
+        private OllamaService $ollamaService,
     ) {}
 
     /**Отображение страницы опроса
@@ -22,7 +26,9 @@ class UserSurveyChatMessagesController extends Controller
      */
     public function survey()
     {
-        $isFinal = UserSurveyChatMessages::where('user_id', auth()->id())->value('is_final');
+        $chatId = Chat::where('user_id', auth()->id())->where('is_system', true)->first()->id;
+        $lastSystemMessage = Message::where('chat_id', $chatId)->latest()->first()->content;
+        $isFinal = str_contains($lastSystemMessage, 'IS_FINAL');
         if($isFinal) {
             return false;
         }
@@ -36,43 +42,67 @@ class UserSurveyChatMessagesController extends Controller
         $validatedData = $request->validate([
             'content' => 'required|string',
             'language' => 'required|string|in:en-US,ru-RU,de-DE',
-            'tts_provider' => 'sometimes|string|in:espeak,yandex'
+            'tts_provider' => 'sometimes|string|in:espeak,yandex',
+            // УКАЗАТЬ МОДЕЛЬ
+            'model' => 'string|in:gemma3:1b'
         ]);
 
-        $message = null;
-
         try {
-            DB::transaction(function () use ($validatedData, &$userMessage, &$botResponse) {
+            [$userMessage, $botResponse] = DB::transaction(function () use ($validatedData) {
                 // Сохраняем сообщение пользователя
-                $userMessage = UserSurveyChatMessages::create([
-                    'user_id' => auth()->id(),
+                $chat = $this->getOrCreateSystemChat();
+
+                $userMessage = Message::create([
+                    'chat_id' => $chat->id,
+                    'role' => 'user',
                     'content' => $validatedData['content'],
-                    'is_bot' => false,
-                    'message_type' => 'user'
                 ]);
 
-                dd("Необходимо продумать ответ (response) модели. UserSurveyChatMessagesController");
+                // Получаем историю диалога для контекста
+                $chatHistory = Message::where('chat_id', $chat->id)
+                    ->orderBy('created_at', 'asc')
+                    ->get()
+                    ->map(function ($message) {
+                        return [
+                            'content' => $message->content,
+                            'role' => $message->is_bot ? 'assistant' : 'user'
+                        ];
+                    })
+                    ->toArray();
 
-                // Генерируем ответ бота
-                $response = "Ответ бота";
+                // Формируем промпт для Ollama
+//                $prompt = $this->ollamaService->buildPrompt($chatHistory, $validatedData['content']);
+
+                // Отправляем запрос к Ollama
+//                $ollamaResponse = $this->ollamaService->callOllama($prompt, $validatedData['model']); // или сделать config('survey.model');
+//                $ollamaResponse = $this->ollamaService->callOllama($prompt, "qwen2.5:3b");
+
+                // Парсим ответ Ollama
+//                $responseContent = $ollamaResponse['message']['content'];
+//                $isFinal = $ollamaResponse['is_final'] ?? false;
+
+//                if ($isFinal)
+//                {
+//                    $this->ollamaService->generateParameters($chatHistory, "qwen2.5:3b");
+//                }
+
                 // Генерируем аудио ответ согласно content
-                $botResponse = $this->botStore([
-                    'content' => $response,
-                    'language' => $validatedData['language'],
-                    'tts_provider' => $validatedData['tts_provider']
-                ]);
-                //$botResponse = UserSurveyChatMessages::where('is_bot', true)->latest()->first();
+//                $botResponse = $this->audioService->synthesizeAndSave($chat, 'assistant', $responseContent, $validatedData['language'], $validatedData['provider']);
+                $responseContent = "hello";
+                $botResponse = $this->audioService->synthesizeAndSave($chat, 'assistant', $responseContent, $validatedData['language'], $validatedData['tts_provider']);
 
-                if (!$botResponse || !$botResponse->audio_path) {
+                if (!$botResponse || !isset($botResponse['audio_path'])) {
                     throw new \RuntimeException('Failed to generate audio response');
                 }
+
+                return [$userMessage, $botResponse];
             });
 
             return response()->json([
                 'success' => true,
                 'data' => [
                     'user_message' => $userMessage,
-                    'bot_response' => $botResponse
+                    'bot_response' => $botResponse,
                 ]
             ]);
 
@@ -81,18 +111,34 @@ class UserSurveyChatMessagesController extends Controller
             return response()->json([
                 'success' => false,
                 'error' => 'Message processing failed',
-                'details' => $e->getMessage()
+                'details' => $e->getMessage() . PHP_EOL . print_r($e->getTraceAsString())
             ], 500);
         }
     }
-
     /**Получение истории сообщений
      */
     public function history()
     {
-        $messages = UserSurveyChatMessages::where('user_id', auth()->id())
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $chat = Chat::where('user_id', auth()->id())->where('is_system', true)->first();
+        if (!$chat)
+        {
+            Chat::create([
+                'user_id' => auth()->id(),
+                'is_system' => true,
+            ]);
+        }
+        $messages = Message::where('chat_id', $chat->id)
+            ->orderBy('created_at', 'asc')
+            ->get()
+            ->map(function ($message) {
+                if ($message->role === 'assistant') {
+                    $audioContent = AudioMessage::where('message_id', $message->id)->first();
+                    $message->audio_url = $audioContent ? $audioContent->audio_url : null;
+                    $message->audio_path = $audioContent ? $audioContent->audio_path : null;
+                }
+                return $message;
+            })
+            ->toArray();
 
         return response()->json([
             'success' => true,
@@ -100,20 +146,25 @@ class UserSurveyChatMessagesController extends Controller
         ]);
     }
 
-    /**Добавление сообщения большой языковой моделью
+    /**Получение чата с is_system флагом или его создание
+     *
+     * @return Chat|bool
      */
-    private function botStore(array $validatedData): UserSurveyChatMessages|bool
+    private function getOrCreateSystemChat(): Chat|bool
     {
-        try {
-            return $this->audioService->synthesizeAndSave(
-                $validatedData['content'],
-                $validatedData['language'],
-                $validatedData['tts_provider'],
-                auth()->id()
-            );
-        } catch (\Throwable $e) {
-            Log::error('Bot response error: ' . $e->getMessage());
+        if(!auth()->check())
+        {
             return false;
         }
+        $userId = auth()->id();
+
+        $chat = Chat::where('user_id', $userId)->where('is_system', true)->first();
+        if (!$chat) {
+            $chat = Chat::create([
+                'user_id' => $userId,
+                'is_system' => true,
+            ]);
+        }
+        return $chat;
     }
 }

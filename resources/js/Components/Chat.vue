@@ -1,12 +1,11 @@
 <template>
-    <!-- Keeping only relevant sections for changes -->
-    <div class="flex w-full min-h-screen bg-primary">
+    <div class="flex w-full min-h-screen bg-gradient-to-br from-indigo-50 via-white to-blue-50">
         <!-- Left sidebar - always visible on desktop -->
-        <div class="hidden lg:flex flex-col w-64 border rounded-3xl m-4 p-4 bg-secondary border-accent h-screen">
-            <div class="flex justify-between items-center px-4 py-2 color-primary">
+        <div class="hidden lg:flex flex-col w-64 border rounded-2xl m-4 p-4 bg-white shadow-lg border-indigo-100 h-screen">
+            <div class="flex justify-between items-center px-4 py-2 text-gray-800">
                 <router-link
                     :to="{name:'Main'}"
-                    class="text-xl font-semibold"
+                    class="text-xl font-semibold text-indigo-600 hover:text-indigo-800 transition-colors duration-300"
                 >На главную
                 </router-link>
                 <ThemeToggle :theme="theme" :setTheme="setTheme"/>
@@ -25,10 +24,10 @@
             <!-- New chat button fixed at bottom -->
             <div class="p-4 mt-2">
                 <button
-                    class="w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-lg text-white bg-blue-500 hover:bg-blue-600"
+                    class="w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-lg text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg"
                     @click="addChatHandler"
                 >
-                    <span>New Chat</span>
+                    <span>Новый чат</span>
                 </button>
             </div>
         </div>
@@ -36,19 +35,16 @@
         <!-- Mobile menu - toggleable -->
         <div v-if="isMenuOpen" class="fixed inset-0 z-50 flex lg:hidden">
             <div class="fixed inset-0 bg-black bg-opacity-50" @click="toggleMenu"></div>
-            <div class="relative z-50 w-64 bg-secondary flex flex-col h-full">
-                <div class="flex items-center justify-between p-4 border-b border-primary">
-                    <span class="text-xl font-semibold color-primary">Menu</span>
-                    <button @click="toggleMenu" class="p-2">
-                        <span class="text-gray-900">✕</span>
-                    </button>
-                </div>
+            <div class="relative z-50 w-64 bg-white flex flex-col h-full shadow-xl">
                 <div class="flex flex-col h-full">
                     <div class="flex flex-row justify-between mb-2 p-4">
-                        <button class="text-xl font-semibold color-primary hover:bg-primary" @click="exitHandler">
-                            Home
+                        <button class="text-xl font-semibold text-indigo-600 hover:text-indigo-800 transition-colors duration-300" @click="exitHandler">
+                            На главную
                         </button>
                         <ThemeToggle :theme="theme" :setTheme="setTheme"/>
+                        <button @click="toggleMenu" class="p-2 rounded-full hover:bg-indigo-50 transition-colors duration-300">
+                            <X size="20" class="text-gray-700"/>
+                        </button>
                     </div>
                     <!-- Mobile chat list with scrollable area -->
                     <div class="flex-1 overflow-y-auto px-4">
@@ -62,12 +58,12 @@
                         />
                     </div>
                     <!-- New chat button fixed at bottom of mobile menu -->
-                    <div class="p-4 border-t border-primary">
+                    <div class="p-4 border-t border-indigo-100">
                         <button
-                            class="flex items-center justify-center space-x-2 w-full px-4 py-2 rounded-lg text-gray-900 bg-accent hover:bg-blue-600 hover:text-primary"
+                            class="flex items-center justify-center space-x-2 w-full px-4 py-2 rounded-lg text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg"
                             @click="addChatHandler"
                         >
-                            <span>New chat</span>
+                            <span>Новый чат</span>
                         </button>
                     </div>
                 </div>
@@ -75,24 +71,24 @@
         </div>
 
         <!-- Main content area (center) - always visible -->
-        <div class="flex-1 flex flex-col border rounded-3xl m-4 p-4 border-accent h-screen">
+        <div class="flex-1 flex flex-col border rounded-2xl m-4 p-4 border-indigo-100 bg-white shadow-lg h-screen">
             <!-- Header with menu toggle for mobile -->
-            <div class="flex justify-between items-center px-4 py-2 color-primary">
+            <div class="flex justify-between items-center px-4 py-2 text-gray-800">
                 <div class="flex items-center space-x-2">
-                    <button class="lg:hidden p-2 rounded-lg" @click="toggleMenu">
-                        <Menu size="20"/>
+                    <button class="lg:hidden p-2 rounded-lg hover:bg-indigo-50 transition-colors duration-300" @click="toggleMenu">
+                        <Menu size="20" class="text-indigo-600"/>
                     </button>
                     <ModelSelector @model-selected="handleModelSelected"/>
                 </div>
-                <div v-if="currentChatId" class="text-sm">Chat #{{ currentChatId }}</div>
+                <div v-if="currentChatId" class="text-sm bg-gradient-to-r from-indigo-50 to-blue-50 px-3 py-1 rounded-full text-indigo-700">Chat #{{ currentChatId }}</div>
             </div>
 
             <!-- Empty state when no chat is selected -->
             <div v-if="!currentChatId" class="flex-1 flex items-center justify-center overflow-y-auto">
-                <div class="text-center">
-                    <h2 class="text-xl font-semibold mb-4">Select a chat or start a new one</h2>
+                <div class="text-center p-6 bg-gradient-to-br from-indigo-50 via-white to-blue-50 rounded-2xl shadow-md transform transition-all duration-300 hover:shadow-lg border border-indigo-100 max-w-md">
+                    <h2 class="text-xl font-semibold mb-4 text-gray-800">Select a chat or start a new one</h2>
                     <button
-                        class="px-4 py-2 bg-accent text-gray-900 rounded-lg hover:bg-blue-600"
+                        class="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-lg transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg"
                         @click="addChatHandler"
                     >
                         New Chat
@@ -109,22 +105,24 @@
                     :isAi="msg.role === 'assistant'"
                 />
                 <div v-if="filteredMessages.length === 0" class="flex items-center justify-center h-full text-gray-500">
-                    No messages yet. Start a conversation!
+                    <div class="p-6 bg-gradient-to-br from-indigo-50 via-white to-blue-50 rounded-xl shadow-md border border-indigo-100">
+                        Нет чатов! Давайте поговорим!
+                    </div>
                 </div>
             </div>
 
             <!-- Message input area fixed at bottom -->
-            <div v-if="currentChatId" class="p-4 border bg-secondary rounded-3xl border-accent mt-2">
+            <div v-if="currentChatId" class="p-4 border bg-white rounded-2xl border-indigo-100 shadow-md mt-2">
                 <div class="flex items-center space-x-2">
-                    <div>
+                    <div class="flex space-x-1">
                         <button @click="isFileUploadVisible = true"
-                                class="p-2 rounded-lg hover:bg-primary hover:text-accent">
+                                class="p-2 rounded-lg hover:bg-indigo-50 text-indigo-600 transition-colors duration-300">
                             <Upload size="20"/>
                         </button>
                         <FileUpload v-if="isFileUploadVisible" :on-close="closeFileUpload"
                                     :currentChatId="currentChatId" :onCollectionCreated="handleCollectionCreated"/>
                         <button @click="isModelSettingsVisible = true"
-                                class="p-2 rounded-lg hover:bg-primary hover:text-accent">
+                                class="p-2 rounded-lg hover:bg-indigo-50 text-indigo-600 transition-colors duration-300">
                             <Settings size="20"/>
                         </button>
                         <ModelSettings
@@ -137,13 +135,13 @@
                         type="text"
                         v-model="inputMessage"
                         @keyup.enter="sendMessage"
-                        placeholder="Type your message..."
-                        class="flex-1 p-2 rounded-lg border bg-primary border-secondary"
+                        placeholder="Введите ваше сообщение..."
+                        class="flex-1 p-2 rounded-lg border border-indigo-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-200 outline-none transition-all duration-300"
                     />
                     <button
                         @click="sendMessage"
                         :disabled="isSending"
-                        class="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
+                        class="p-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-lg transition-all duration-300 transform hover:scale-[1.05] disabled:opacity-50 disabled:transform-none disabled:hover:scale-100"
                     >
                         <Send size="20"/>
                     </button>
@@ -163,7 +161,7 @@ import ChatList from "./ChatList.vue";
 import ModelSettings from "./ModelSettings.vue";
 import FileUpload from "./FileUpload.vue";
 import ChatMessage from "./ChatMessage.vue";
-import {Upload, Send, Settings, Menu, MessageSquare} from "lucide-vue-next";
+import {Upload, Send, Settings, Menu, MessageSquare, X} from "lucide-vue-next";
 import axios from "axios";
 import {useAuthStore} from "../stores/authStore.js";
 
@@ -180,7 +178,8 @@ export default {
         ChatMessage,
         ModelSettings,
         Menu,
-        MessageSquare
+        MessageSquare,
+        X
     },
     setup() {
         const authStore = useAuthStore();
@@ -435,5 +434,23 @@ export default {
 /* Ensure message area doesn't push input field off screen */
 .flex-1.overflow-y-auto {
     min-height: 0;
+}
+
+/* Custom scrollbar styling */
+.overflow-y-auto::-webkit-scrollbar {
+    width: 6px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+    background-color: rgba(99, 102, 241, 0.3);
+    border-radius: 3px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(99, 102, 241, 0.5);
 }
 </style>

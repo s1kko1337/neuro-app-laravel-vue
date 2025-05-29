@@ -35,4 +35,13 @@ return [
         ],
     ],
 
+    'espeak' => [
+        'path' => env('ESPEAK_PATH'),
+        'default_voice' => 'ru-RU',
+    ],
+
+    'python_api' => [
+        'host' => env('PYTHON_API_HOST', 'python'),
+        'port' => env('PYTHON_API_PORT', 8000),
+    ],
 ];

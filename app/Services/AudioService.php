@@ -3,7 +3,10 @@
 namespace App\Services;
 
 use App\Factories\TtsServiceFactory;
-use App\Models\UserSurveyChatMessages;
+use App\Models\AudioMessage;
+use App\Models\Chat;
+use App\Models\Message;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -14,32 +17,44 @@ class AudioService
         private readonly TtsServiceFactory $ttsFactory
     ) {}
 
-    public function synthesizeAndSave(string $text, string $language, string $provider, int $userId): UserSurveyChatMessages
+    //$botResponse = $this->audioService->synthesizeAndSave([
+    //                        'chat_id' => $chat->id,
+    //                        'role' => 'assistant',
+    //                        'content' => $responseContent,
+    //                        'language' => $validatedData['language'],
+    //                        'tts_provider' => $validatedData['tts_provider'] ?? 'espeak',
+    //                    ]);
+    public function synthesizeAndSave(Chat $chat, string $role, string $content, string $language, string $provider): array
     {
-        try {
-            $this->validateInput($text, $language, $provider);
+        try
+        {
+            $cleanContent = $this->validateInput($content, $language, $provider);
 
-            if ($provider === 'yandex') {
-                $audioContent = $this->processYandexRequest($text, $language);
-            } else {
-                $audioContent = $this->processDefaultRequest($text, $language, $provider);
+            // Аудио файл
+            $audioContent = ($provider === 'yandex')
+                ? $this->processYandexRequest($cleanContent, $language)
+                : $this->processDefaultRequest($cleanContent, $language, $provider);
+
+            if (empty($audioContent)) {
+                throw new \RuntimeException("Audio content is empty");
             }
 
             $audioPath = $this->storeAudioFile($audioContent, $provider);
 
-            $newChatMessage = $this->createChatMessage($userId, $text, $audioPath);
-
-            return $newChatMessage;
-
-        } catch (\Throwable $e) {
+            return $this->createChatMessage($chat, $role, $cleanContent, $audioPath);
+        }
+        catch (\Throwable $e)
+        {
             $this->handleServiceError($e);
             throw $e;
         }
     }
 
-    private function validateInput(string $text, string $language, string $provider): void
+    private function validateInput(string $content, string $language, string $provider): string
     {
-        if (mb_strlen($text) > 500) {
+        $cleanContent = mb_convert_encoding($content, 'UTF-8', 'UTF-8');
+
+        if (mb_strlen($cleanContent) > 500) {
             throw new \InvalidArgumentException('Text exceeds maximum length');
         }
 
@@ -50,19 +65,21 @@ class AudioService
         if (!in_array($provider, ['espeak', 'yandex'])) {
             throw new \InvalidArgumentException('Invalid TTS provider');
         }
+
+        return $cleanContent;
     }
 
-    private function processYandexRequest(string $text, string $language): string
+    private function processYandexRequest(string $content, string $language): string
     {
         $ttsService = $this->ttsFactory->make('yandex');
-        $lpcmAudio = $ttsService->synthesize($text, $language);
+        $lpcmAudio = $ttsService->synthesize($content, $language);
         return $this->convertToWav($lpcmAudio);
     }
 
-    private function processDefaultRequest(string $text, string $language, string $provider): string
+    private function processDefaultRequest(string $content, string $language, string $provider): string
     {
         $ttsService = $this->ttsFactory->make($provider);
-        return $ttsService->synthesize($text, $language);
+        return $ttsService->synthesize($content, $language);
     }
 
     private function convertToWav(string $lpcmData): string
@@ -92,21 +109,42 @@ class AudioService
     private function storeAudioFile(string $audioContent, string $provider): string
     {
         $extension = $provider === 'edge' ? 'mp3' : 'wav';
-        $path = 'chat_audio/' . Str::uuid() . '.' . $extension;
+        $path = 'public/chat_audio/user_' . auth()->id() . '/' . Str::uuid() . '.' . $extension;
 
+        // Сохраняем в storage/app/public/chat_audio/...
         Storage::disk('public')->put($path, $audioContent);
 
+        // Возвращаем путь, который будет доступен через симлинк
         return $path;
     }
 
-    private function createChatMessage(int $userId, string $text, string $audioPath): UserSurveyChatMessages
+    /**Сохранение сообщения и аудиофайла в таблице БД
+     * @param int $userId
+     * @param string $content
+     * @param string $audioPath
+     * @return array
+     */
+    private function createChatMessage(Chat $chat, string $role, string $content, string $audioPath): array
     {
-        return UserSurveyChatMessages::create([
-            'user_id' => $userId,
-            'content' => $text,
+        DB::transaction(function () use ($chat, $role, $content, $audioPath)
+        {
+            $message = Message::create([
+                'chat_id' => $chat->id,
+                'role' => $role,
+                'content' => $content,
+            ]);
+            AudioMessage::create([
+                'message_id' => $message->id,
+                'audio_path' => $audioPath,
+            ]);
+        });
+        return [
+            'user_id' => auth()->id(),
+            'content' => $content,
             'audio_path' => $audioPath,
-            'is_bot' => true,
-        ]);
+            'audio_url' => Storage::disk('public')->url($audioPath),
+            'role' => $role,
+        ];
     }
 
     private function handleServiceError(\Throwable $e): void
