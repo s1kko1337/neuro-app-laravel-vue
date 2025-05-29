@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('chats', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users');
-            $table->boolean('is_system')->nullable()->default(false);
+            $table->boolean('is_system')->default(false);
             $table->timestamps();
         });
     }

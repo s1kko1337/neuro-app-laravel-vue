@@ -74,11 +74,11 @@
                     <div v-for="(message, index) in chatHistory" :key="index"
                          :class="[
                             'flex transition-all duration-300',
-                            message.is_bot ? 'justify-start' : 'justify-end',
+                            message.role === 'assistant' ? 'justify-start' : 'justify-end',
                         !isChatExpanded && 'scale-90 opacity-80']">
                         <div :class="[
                                 'max-w-xs p-3 rounded-lg transition-all duration-300 relative',
-                                message.is_bot
+                                message.role === 'assistant'
                                     ? 'bg-gray-300 text-black'
                                     : 'bg-sky-300 border text-black',
                                 !isChatExpanded && 'p-2 max-w-[200px] text-xs'
@@ -90,7 +90,7 @@
                             </p>
 
                             <!-- Кнопка воспроизведения -->
-                            <button v-if="message.is_bot && message.audio_url"
+                            <button v-if="message.role === 'assistant' && message.audio_url"
                                     @click.stop="toggleAudio(message)"
                                     class="absolute top-2 right-2 p-1 hover:bg-gray-400/30 rounded-full transition-colors">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -147,7 +147,7 @@ import axios from 'axios';
 
 const selectedLanguage = ref('ru-RU');
 const errorMessage = ref('');
-const selectedProvider = ref('yandex');
+const selectedProvider = ref('espeak');
 const audioUrl = ref(null);
 
 // WebSpeech
@@ -161,7 +161,7 @@ const chatHistory = ref([]);
 const userInput = ref('');
 const isSending = ref(false);
 let ws = null;
-const isChatExpanded = ref(true);
+const isChatExpanded = ref(false);
 
 const toggleChat = () => {
     isChatExpanded.value = !isChatExpanded.value;
@@ -174,24 +174,6 @@ const loadHistory = async () => {
     } catch (e) {
         errorMessage.value = 'Ошибка загрузки истории';
     }
-};
-
-// Инициализация WebSocket
-const initWebSocket = () => {
-    // ws.value = new WebSocket(`ws://${window.location.host}/ws/chat`);
-    //
-    // ws.value.onmessage = (event) => {
-    //     const data = JSON.parse(event.data);
-    //
-    //     // Обновляем только новые сообщения
-    //     if (!messages.value.some(msg => msg.id === data.id)) {
-    //         messages.value.push(data);
-    //     }
-    // };
-    //
-    // ws.value.onerror = (e) => {
-    //     error.value = 'Ошибка соединения с сервером';
-    // };
 };
 
 // Распознавание
@@ -255,7 +237,7 @@ const toggleAudio = async (message) => {
             audioElement.pause();
         }
 
-        const audioUrl = `/api/v1/${message.audio_path}`;
+        const audioUrl = `/api/v1/get_audio/${message.audio_path}`;
 
         const response = await axios.get(audioUrl, {
             responseType: 'blob'
@@ -309,7 +291,7 @@ const sendTextMessage = async () => {
         // Добавляем сообщение пользователя сразу
         chatHistory.value.push({
             content: userMessageContent,
-            is_bot: false,
+            role: 'user',
             timestamp: new Date().toISOString(),
             audio_url: null
         });
@@ -325,7 +307,7 @@ const sendTextMessage = async () => {
             content: response.data.data.bot_response.content,
             audio_url: response.data.data.bot_response.audio_url,
             audio_path: response.data.data.bot_response.audio_path,
-            is_bot: true,
+            role: response.data.data.bot_response.role,
             timestamp: response.data.data.bot_response.created_at,
             id: response.data.data.bot_response.id
         });

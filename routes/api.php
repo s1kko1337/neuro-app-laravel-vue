@@ -8,6 +8,7 @@ use \App\Http\Controllers\ChatController;
 
 use App\Http\Controllers\FileController;
 use App\Http\Controllers\GenerateContextController;
+use App\Http\Controllers\Voice\AudioController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
@@ -43,7 +44,6 @@ Route::prefix('v1')->middleware(['throttle:api', 'auth:sanctum'])->group(functio
         ->middleware('throttle:25,1')
         ->name('verification.send');
 });
-
 
 // Маршруты, требующие верифицированного email
 Route::prefix('v1')->middleware(['throttle:api', 'auth:sanctum', 'verified', 'can:use-Api'])->group(function () {

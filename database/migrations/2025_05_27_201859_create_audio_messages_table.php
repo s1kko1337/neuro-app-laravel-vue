@@ -11,13 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('user_survey_chat_messages', function (Blueprint $table) {
+        Schema::create('audio_messages', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users');
-            $table->boolean('is_bot')->default(false);
-            $table->boolean('is_final')->default(false);
-            $table->string('content');
-            $table->string('audio_path')->nullable();
+            $table->foreignId('message_id')->constrained('messages');
+            $table->string('audio_path');
             $table->timestamps();
         });
     }
