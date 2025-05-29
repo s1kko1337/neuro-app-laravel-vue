@@ -8,6 +8,8 @@ COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr
 
 RUN install-php-extensions @composer-2 opcache gd pdo_pgsql pgsql
 
+RUN apk update && apk upgrade && apk add --no-cache sox
+
 ENV COMPOSER_ALLOW_SUPERUSER=1
 ENV COMPOSER_MEMORY_LIMIT=-1
 
@@ -32,6 +34,8 @@ RUN install-php-extensions opcache pdo_pgsql pgsql
 
 RUN apk --no-cache add bash
 
+RUN apk update && apk upgrade && apk add --no-cache sox
+
 COPY --from=cli /app /var/www/html
 
 WORKDIR /var/www/html
@@ -49,6 +53,7 @@ COPY docker/nginx/conf.d/* /etc/nginx/conf.d
 COPY --from=cli /app/public /var/www/html/web
 
 RUN apk update && apk upgrade && apk add --no-cache bash
+RUN apk add --no-cache sox
 
 ARG PHP_UPSTREAM_CONTAINER=php-fpm
 ARG PHP_UPSTREAM_PORT=9000

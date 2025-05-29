@@ -82,12 +82,15 @@ export default {
         const localChats = ref([]);
 
         const processedChats = computed(() => {
+            let chats = [];
+
             if (Array.isArray(props.chats)) {
-                return props.chats; // Already an array
+                chats = props.chats;
             } else if (props.chats && props.chats.data && Array.isArray(props.chats.data)) {
-                return props.chats.data;
+                chats = props.chats.data;
             }
-            return [];
+
+            return chats.filter(chat => !chat.is_system);
         });
 
         watchEffect(() => {

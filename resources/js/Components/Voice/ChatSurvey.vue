@@ -133,7 +133,7 @@ import axios from 'axios';
 
 const selectedLanguage = ref('ru-RU');
 const errorMessage = ref('');
-const selectedProvider = ref('espeak');
+const selectedProvider = ref('yandex');
 const audioUrl = ref(null);
 
 // WebSpeech
@@ -147,7 +147,7 @@ const chatHistory = ref([]);
 const userInput = ref('');
 const isSending = ref(false);
 let ws = null;
-const isChatExpanded = ref(false);
+const isChatExpanded = ref(true);
 
 const toggleChat = () => {
     isChatExpanded.value = !isChatExpanded.value;
@@ -159,6 +159,18 @@ const loadHistory = async () => {
         chatHistory.value = response.data.data.reverse();
     } catch (e) {
         errorMessage.value = 'Ошибка загрузки истории';
+    }
+};
+
+const initChat = async () => {
+    try
+    {
+        const response = await axios.post('/api/v1/survey_init');
+
+    }
+    catch (e)
+    {
+        errorMessage.value = 'Ошибка инициализации чата'
     }
 };
 
@@ -254,11 +266,9 @@ const toggleAudio = async (message) => {
 
 initWebSpeech();
 
-// WebSockets
-// Инициализация WebSocket
 onMounted(async () => {
+    await initChat();
     await loadHistory();
-    initWebSocket();
 });
 
 // Добавление сообщения в историю

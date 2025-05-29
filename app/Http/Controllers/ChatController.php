@@ -152,7 +152,7 @@ class ChatController extends Controller
         }
     }
 
-    private function getLastUserMessage(array $messages): ?array
+    public function getLastUserMessage( $messages)
     {
         foreach (array_reverse($messages) as $message) {
             if ($message['role'] === 'user') {

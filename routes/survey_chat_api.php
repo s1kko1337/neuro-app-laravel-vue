@@ -7,6 +7,8 @@ Route::get('/chat/history', [\App\Http\Controllers\Voice\UserSurveyChatMessagesC
 Route::get('/survey', [\App\Http\Controllers\Voice\UserSurveyChatMessagesController::class, 'survey']);
 Route::post('/survey', [\App\Http\Controllers\Voice\UserSurveyChatMessagesController::class, 'userStore']);
 
+Route::post('/survey_init', [\App\Http\Controllers\Voice\UserSurveyChatMessagesController::class, 'getOrCreateSystemChat']);
+
 Route::get('/get_audio/{path}', [\App\Http\Controllers\Voice\AudioController::class, 'getAudio'])
     ->where('path', '.*')
     ->name('audio.file');

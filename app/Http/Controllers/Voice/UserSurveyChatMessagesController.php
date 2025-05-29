@@ -2,23 +2,26 @@
 
 namespace App\Http\Controllers\Voice;
 
+use App\Http\Controllers\ChatController;
 use App\Http\Controllers\Controller;
 use App\Models\AudioMessage;
 use App\Models\Chat;
 use App\Models\Message;
 use App\Services\AudioService;
-use App\Services\OllamaService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class UserSurveyChatMessagesController extends Controller
 {
     public function __construct(
-        private AudioService $audioService,
-        private OllamaService $ollamaService,
-    ) {}
+        private AudioService  $audioService,
+        private ChatController $chatController,
+    )
+    {
+    }
 
     /**Отображение страницы опроса
      *
@@ -29,7 +32,7 @@ class UserSurveyChatMessagesController extends Controller
         $chatId = Chat::where('user_id', auth()->id())->where('is_system', true)->first()->id;
         $lastSystemMessage = Message::where('chat_id', $chatId)->latest()->first()->content;
         $isFinal = str_contains($lastSystemMessage, 'IS_FINAL');
-        if($isFinal) {
+        if ($isFinal) {
             return false;
         }
         return true;
@@ -43,8 +46,6 @@ class UserSurveyChatMessagesController extends Controller
             'content' => 'required|string',
             'language' => 'required|string|in:en-US,ru-RU,de-DE',
             'tts_provider' => 'sometimes|string|in:espeak,yandex',
-            // УКАЗАТЬ МОДЕЛЬ
-            'model' => 'string|in:gemma3:1b'
         ]);
 
         try {
@@ -70,25 +71,37 @@ class UserSurveyChatMessagesController extends Controller
                     })
                     ->toArray();
 
-                // Формируем промпт для Ollama
-//                $prompt = $this->ollamaService->buildPrompt($chatHistory, $validatedData['content']);
+                $data = [
+                    'messages' => $chatHistory,
+                    'chatId' => $chat->id,
+                    'model' => config('services.survey.model'),
+                ];
+                //dd($data['messages']);
 
-                // Отправляем запрос к Ollama
-//                $ollamaResponse = $this->ollamaService->callOllama($prompt, $validatedData['model']); // или сделать config('survey.model');
-//                $ollamaResponse = $this->ollamaService->callOllama($prompt, "qwen2.5:3b");
+                $lastUserMessage = $this->chatController->getLastUserMessage($data['messages']);
+                \Log::info('Last User Message:', ['message' => $lastUserMessage]);
 
-                // Парсим ответ Ollama
-//                $responseContent = $ollamaResponse['message']['content'];
-//                $isFinal = $ollamaResponse['is_final'] ?? false;
+                // Отправка POST-запроса на FastAPI
+                $pythonHost = config('services.python_api.host');
+                $pythonPort = config('services.python_api.port');
+                $url = "http://{$pythonHost}:{$pythonPort}/chats/{$chat->id}/survey_messages";
+                $response = Http::post($url, [
+                    'messages' => $data['messages'],
+                    'system_prompt' => "
+                You are conducting a survey of a student about his hobbies.
+                Ask one question per message.
+                Each new question should be on a new topic to cover as many of the student's interests as possible.
+                Always answer in Russian.
+                Make sure your answer is as accurate and complete as possible.
+                Use the provided context to improve the quality of your answer.
+                If the question is asked in another language, translate it into Russian before answering.
+            ",
+                ]);
+                // Логируем ответ от FastAPI
+                \Log::info('Response from FastAPI:', ['response' => $response->json()]);
+                // Возврат ответа от FastAPI
+                $responseContent = $response['message'];
 
-//                if ($isFinal)
-//                {
-//                    $this->ollamaService->generateParameters($chatHistory, "qwen2.5:3b");
-//                }
-
-                // Генерируем аудио ответ согласно content
-//                $botResponse = $this->audioService->synthesizeAndSave($chat, 'assistant', $responseContent, $validatedData['language'], $validatedData['provider']);
-                $responseContent = "hello";
                 $botResponse = $this->audioService->synthesizeAndSave($chat, 'assistant', $responseContent, $validatedData['language'], $validatedData['tts_provider']);
 
                 if (!$botResponse || !isset($botResponse['audio_path'])) {
@@ -115,13 +128,13 @@ class UserSurveyChatMessagesController extends Controller
             ], 500);
         }
     }
+
     /**Получение истории сообщений
      */
     public function history()
     {
         $chat = Chat::where('user_id', auth()->id())->where('is_system', true)->first();
-        if (!$chat)
-        {
+        if (!$chat) {
             Chat::create([
                 'user_id' => auth()->id(),
                 'is_system' => true,
@@ -150,10 +163,9 @@ class UserSurveyChatMessagesController extends Controller
      *
      * @return Chat|bool
      */
-    private function getOrCreateSystemChat(): Chat|bool
+    public function getOrCreateSystemChat(): Chat|bool
     {
-        if(!auth()->check())
-        {
+        if (!auth()->check()) {
             return false;
         }
         $userId = auth()->id();
@@ -164,6 +176,40 @@ class UserSurveyChatMessagesController extends Controller
                 'user_id' => $userId,
                 'is_system' => true,
             ]);
+
+            $userMessage = Message::create([
+                'chat_id' => $chat->id,
+                'role' => 'user',
+                'content' => 'Привет. Начинай опрос!',
+            ]);
+
+            // Отправка POST-запроса на FastAPI
+            $pythonHost = config('services.python_api.host');
+            $pythonPort = config('services.python_api.port');
+            $url = "http://{$pythonHost}:{$pythonPort}/chats/{$chat->id}/survey_messages";
+            $response = Http::post($url, [
+                'messages' => array($userMessage),
+                'system_prompt' => "
+                You are conducting a survey of a student about his hobbies.
+                Ask one question per message.
+                Each new question should be on a new topic to cover as many of the student's interests as possible.
+                Ask questions from different areas, cover all his interests.
+                Always answer in Russian.
+                Make sure your answer is as accurate and complete as possible.
+                Use the provided context to improve the quality of your answer.
+            ",
+            ]);
+            // Логируем ответ от FastAPI
+            \Log::info('Response from FastAPI:', ['response' => $response->json()]);
+            // Возврат ответа от FastAPI
+            $responseContent = $response['message'];
+
+            $botResponse = $this->audioService->synthesizeAndSave($chat, 'assistant', $responseContent, 'ru-RU', 'yandex');
+
+            if (!$botResponse || !isset($botResponse['audio_path'])) {
+                throw new \RuntimeException('Failed to generate audio response');
+            }
+
         }
         return $chat;
     }

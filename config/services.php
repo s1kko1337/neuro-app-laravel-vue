@@ -50,4 +50,8 @@ return [
         'client_id' => env('YANDEX_CLIENT_ID', 'your_oauth_client_id'),
         'iam_token' => env('YANDEX_IAM_TOKEN'),
     ],
+
+    'survey' => [
+        'model' => env('SURVEY_MODEL'),
+    ],
 ];
