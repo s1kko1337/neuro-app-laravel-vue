@@ -8,7 +8,9 @@ use App\Models\AudioMessage;
 use App\Models\Chat;
 use App\Models\Message;
 use App\Services\AudioService;
+use App\Services\OllamaService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -17,7 +19,8 @@ use Illuminate\Support\Facades\Storage;
 class UserSurveyChatMessagesController extends Controller
 {
     public function __construct(
-        private AudioService  $audioService,
+        private AudioService   $audioService,
+        private OllamaService $ollamaService,
         private ChatController $chatController,
     )
     {
@@ -88,19 +91,37 @@ class UserSurveyChatMessagesController extends Controller
                 $response = Http::post($url, [
                     'messages' => $data['messages'],
                     'system_prompt' => "
-                You are conducting a survey of a student about his hobbies.
-                Ask one question per message.
-                Each new question should be on a new topic to cover as many of the student's interests as possible.
+                You are conducting a survey of the student about his hobbies.
+                Ask one question in each message.
+                Each new question should be on a new topic in order to cover as many of the student's interests as possible.
+                Ask questions from different fields, cover all his interests.
+                Ask exactly 5 questions in total, each in a separate message.
+                After the user answers the fifth question, send a sixth message containing ONLY the text 'IS_FINAL'.
+                Do NOT write any additional text or questions in the sixth message.
                 Always answer in Russian.
-                Make sure your answer is as accurate and complete as possible.
-                Use the provided context to improve the quality of your answer.
-                If the question is asked in another language, translate it into Russian before answering.
+                Make sure that your answer is as accurate and complete as possible.
             ",
                 ]);
                 // Логируем ответ от FastAPI
                 \Log::info('Response from FastAPI:', ['response' => $response->json()]);
                 // Возврат ответа от FastAPI
                 $responseContent = $response['message'];
+
+                $isFinal = str_contains($responseContent, 'IS_FINAL');
+                if ($isFinal) {
+                    $response = $this->ollamaService->gentrateUserSurvey($chatHistory);
+
+                    $jsonString = trim(str_replace(['```json', '```'], '', $response));
+                    $hobbies = json_decode($jsonString, true);
+
+                    \Log::info('Response from FastAPI:', ['response' => $response]);
+
+                    $user = Auth::user();
+                    $userSurvey = $user->parameters()->updateOrCreate([
+                            'user_id'=>$user->id,
+                            'parameters' =>implode(',',$hobbies)
+                    ])->toArray();
+                }
 
                 $botResponse = $this->audioService->synthesizeAndSave($chat, 'assistant', $responseContent, $validatedData['language'], $validatedData['tts_provider']);
 
@@ -190,13 +211,15 @@ class UserSurveyChatMessagesController extends Controller
             $response = Http::post($url, [
                 'messages' => array($userMessage),
                 'system_prompt' => "
-                You are conducting a survey of a student about his hobbies.
-                Ask one question per message.
-                Each new question should be on a new topic to cover as many of the student's interests as possible.
-                Ask questions from different areas, cover all his interests.
+                You are conducting a survey of the student about his hobbies.
+                Ask one question in each message.
+                Each new question should be on a new topic in order to cover as many of the student's interests as possible.
+                Ask questions from different fields, cover all his interests.
+                Ask exactly 5 questions in total, each in a separate message.
+                After the user answers the fifth question, send a sixth message containing ONLY the text 'IS_FINAL'.
+                Do NOT write any additional text or questions in the sixth message.
                 Always answer in Russian.
-                Make sure your answer is as accurate and complete as possible.
-                Use the provided context to improve the quality of your answer.
+                Make sure that your answer is as accurate and complete as possible.
             ",
             ]);
             // Логируем ответ от FastAPI
@@ -213,4 +236,5 @@ class UserSurveyChatMessagesController extends Controller
         }
         return $chat;
     }
+
 }

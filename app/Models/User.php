@@ -6,6 +6,7 @@ use Illuminate\Contracts\Auth\CanResetPassword;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -53,5 +54,10 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPassword
     public function chats(): HasMany
     {
         return $this->hasMany(Chat::class);
+    }
+
+    public function parameters(): HasOne
+    {
+        return $this->hasOne(UserParameters::class);
     }
 }

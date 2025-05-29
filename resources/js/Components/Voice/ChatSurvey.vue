@@ -88,12 +88,6 @@
                                 <Play v-if="currentAudioId !== message.id" class="w-4 h-4" />
                                 <Pause v-else class="w-4 h-4" />
                             </button>
-
-                            <!-- Timestamp -->
-                            <p class="text-xs mt-1 opacity-70 transition-opacity"
-                               :class="!isChatExpanded && 'opacity-0 h-0'">
-                                {{ message.timestamp }}
-                            </p>
                         </div>
                     </div>
                 </div>
@@ -156,7 +150,7 @@ const toggleChat = () => {
 const loadHistory = async () => {
     try {
         const response = await axios.get('/api/v1/chat/history');
-        chatHistory.value = response.data.data.reverse();
+        chatHistory.value = response.data.data;
     } catch (e) {
         errorMessage.value = 'Ошибка загрузки истории';
     }
@@ -166,7 +160,6 @@ const initChat = async () => {
     try
     {
         const response = await axios.post('/api/v1/survey_init');
-
     }
     catch (e)
     {

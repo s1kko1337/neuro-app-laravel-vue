@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use App\Models\Message;
 use App\Models\Embedding;
+use Illuminate\Support\Facades\Storage;
 
 class OllamaService
 {
@@ -265,5 +266,63 @@ class OllamaService
             }
         }
         return null;
+    }
+
+    public function gentrateUserSurvey(array $data)
+    {
+        $chat = $this->getOrCreateSummarizeChat();
+
+        $userMessage = Message::create([
+            'chat_id' => $chat->id,
+            'role' => 'user',
+            'content' => 'В соответствии с заданием.
+             Выбери 10 наиболее подходящих для студента интересов из предложенного списка, основываясь на ответах из его интервью.
+             ###ИНТЕРВЬЮ###' . json_encode($data, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
+        ]);
+        // Отправка POST-запроса на FastAPI
+        $pythonHost = config('services.python_api.host');
+        $pythonPort = config('services.python_api.port');
+
+        $surveys = Storage::disk('local')->get('/ollama/surveys.json');
+
+        $url = "http://{$pythonHost}:{$pythonPort}/chats/{$chat->id}/survey_messages";
+        $response = Http::post($url, [
+            'messages' => array($userMessage),
+            'system_prompt' => "
+                ###INSTRUCTIONS###
+                You are an analyzer of students' interests.
+                Your task is to analyze the student's interview and select the 10 most suitable interests for him.
+                LIST OF INTERESTS:
+                " . $surveys . "
+                ###Response rules###
+                A json array of 10 selected from the list of the most suitable interests for the student.
+            ",
+        ]);
+        // Логируем ответ от FastAPI
+        \Log::info('Response from FastAPI:', ['response' => $response->json()]);
+        // Возврат ответа от FastAPI
+        return $response['message'];
+    }
+
+    private function getOrCreateSummarizeChat(): Chat|bool
+    {
+        if (!auth()->check()) {
+            return false;
+        }
+        $userId = auth()->id();
+
+        $systemChatCount = Chat::where('user_id', $userId)->where('is_system', true)->count();
+        $systemChat = Chat::where('user_id', $userId)->where('is_system', true)->first();
+
+        if ($systemChat && $systemChatCount <2) {
+            $chat = Chat::create([
+                'user_id' => $userId,
+                'is_system' => true,
+            ]);
+        }
+        else {
+            $chat = Chat::where('user_id', $userId)->where('is_system', true)->latest()->first();
+        }
+        return $chat;
     }
 }
