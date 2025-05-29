@@ -44,4 +44,10 @@ return [
         'host' => env('PYTHON_API_HOST', 'python'),
         'port' => env('PYTHON_API_PORT', 8000),
     ],
+
+    'yandex' => [
+        'folder_id' => env('YANDEX_TTS_FOLDER_ID'),
+        'client_id' => env('YANDEX_CLIENT_ID', 'your_oauth_client_id'),
+        'iam_token' => env('YANDEX_IAM_TOKEN'),
+    ],
 ];
