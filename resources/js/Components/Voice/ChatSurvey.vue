@@ -147,7 +147,7 @@ import axios from 'axios';
 
 const selectedLanguage = ref('ru-RU');
 const errorMessage = ref('');
-const selectedProvider = ref('yandex');
+const selectedProvider = ref('espeak');
 const audioUrl = ref(null);
 
 // WebSpeech
@@ -161,7 +161,7 @@ const chatHistory = ref([]);
 const userInput = ref('');
 const isSending = ref(false);
 let ws = null;
-const isChatExpanded = ref(true);
+const isChatExpanded = ref(false);
 
 const toggleChat = () => {
     isChatExpanded.value = !isChatExpanded.value;
@@ -174,24 +174,6 @@ const loadHistory = async () => {
     } catch (e) {
         errorMessage.value = 'Ошибка загрузки истории';
     }
-};
-
-// Инициализация WebSocket
-const initWebSocket = () => {
-    // ws.value = new WebSocket(`ws://${window.location.host}/ws/chat`);
-    //
-    // ws.value.onmessage = (event) => {
-    //     const data = JSON.parse(event.data);
-    //
-    //     // Обновляем только новые сообщения
-    //     if (!messages.value.some(msg => msg.id === data.id)) {
-    //         messages.value.push(data);
-    //     }
-    // };
-    //
-    // ws.value.onerror = (e) => {
-    //     error.value = 'Ошибка соединения с сервером';
-    // };
 };
 
 // Распознавание
