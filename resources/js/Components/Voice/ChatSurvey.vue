@@ -1,56 +1,44 @@
 <template>
-    <div class="min-h-screen bg-gray-100 p-8">
-        <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6">
-            <!-- Панель настроек -->
-            <div class="flex gap-4 mb-6">
+    <div class="min-h-screen w-full bg-gradient-to-br from-indigo-50 via-white to-blue-50 p-4 md:p-8">
+        <div class="w-full max-w-full mx-auto bg-white rounded-2xl shadow-lg p-4 md:p-6 border border-indigo-100">
+            <!-- Settings Panel -->
+            <div class="flex flex-col sm:flex-row gap-4 mb-6">
                 <div class="flex-1">
-                    <label class="block text-gray-700 mb-2">Язык озвучивания:</label>
-                    <select v-model="selectedLanguage" class="w-full p-2 border rounded">
+                    <label class="block text-gray-700 mb-2 font-medium">Язык озвучивания:</label>
+                    <select v-model="selectedLanguage" class="w-full p-2 border border-indigo-200 rounded-lg focus:border-indigo-400 focus:ring-2 focus:ring-indigo-200 outline-none transition-all duration-300">
                         <option value="ru-RU">Русский</option>
                         <option value="en-US">Английский (США)</option>
                         <option value="de-DE">Немецкий</option>
                     </select>
                 </div>
                 <div class="flex-1">
-                    <label class="block text-gray-700 mb-2">Модель озвучивания:</label>
-                    <select v-model="selectedProvider" class="w-full p-2 border rounded">
+                    <label class="block text-gray-700 mb-2 font-medium">Модель озвучивания:</label>
+                    <select v-model="selectedProvider" class="w-full p-2 border border-indigo-200 rounded-lg focus:border-indigo-400 focus:ring-2 focus:ring-indigo-200 outline-none transition-all duration-300">
                         <option value="yandex">yandex</option>
                         <option value="espeak">eSpeak</option>
                     </select>
                 </div>
             </div>
 
-            <!-- Микрофон -->
-            <div class="relative flex-shrink-0">
+            <!-- Microphone -->
+            <div class="relative flex-shrink-0 mb-6">
                 <div
                     @click="toggleRecording"
-                    class="relative w-40 h-40 mx-auto cursor-pointer transition-all duration-300"
+                    class="relative w-32 h-32 md:w-40 md:h-40 mx-auto cursor-pointer transition-all duration-300"
                     :class="{ 'scale-110': isRecording }"
                 >
-                    <!-- Основной круг -->
+                    <!-- Main circle -->
                     <div
-                        class="absolute inset-0 rounded-full flex items-center justify-center transition-all"
+                        class="absolute inset-0 rounded-full flex items-center justify-center transition-all shadow-md"
                         :class="[
-                       isRecording
-                           ? 'bg-red-500 shadow-lg shadow-red-200'
-                           : 'bg-blue-500 hover:bg-blue-600'
-                   ]"
+                            isRecording
+                                ? 'bg-gradient-to-r from-red-500 to-red-600 shadow-lg shadow-red-200'
+                                : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700'
+                        ]"
                     >
-                        <svg
-                            class="w-16 h-16 text-white"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
-                            />
-                        </svg>
+                        <Mic class="w-12 h-12 md:w-16 md:h-16 text-white" />
                     </div>
-                    <!-- Анимация пульсации -->
+                    <!-- Pulse animation -->
                     <div
                         v-if="isRecording"
                         class="absolute inset-0 border-2 border-red-300 rounded-full animate-ping-slow"
@@ -58,52 +46,50 @@
                 </div>
             </div>
 
-            <!-- Добавляем заголовок и кнопку управления -->
-            <div class="mb-2 flex items-center justify-between cursor-pointer" @click="toggleChat">
-                <h3 class="text-gray-600 font-medium">История чата</h3>
-                <span class="transform transition-transform duration-200"
-                      :class="{'rotate-180': !isChatExpanded}">
-                    ▼
-                </span>
+            <!-- Chat history header and toggle -->
+            <div class="mb-2 flex items-center justify-between cursor-pointer rounded-lg hover:bg-indigo-50 p-2 transition-colors duration-200" @click="toggleChat">
+                <h3 class="text-gray-700 font-medium">История чата</h3>
+                <ChevronDown
+                    class="w-5 h-5 text-indigo-600 transform transition-transform duration-200"
+                    :class="{'rotate-180': !isChatExpanded}"
+                />
             </div>
-            <div class="mb-6 overflow-hidden transition-all duration-300 ease-in-out"
+
+            <!-- Chat history container -->
+            <div class="mb-6 overflow-hidden transition-all duration-300 ease-in-out rounded-lg border border-indigo-100"
                  :class="[
-                isChatExpanded ? 'max-h-[38rem]' : 'max-h-24',
-                'overflow-y-auto']">
-                <div class="bg-gray-50 rounded-lg p-4 space-y-4 min-h-[6rem]">
+                    isChatExpanded ? 'max-h-[38rem]' : 'max-h-24',
+                    'overflow-y-auto'
+                 ]">
+                <div class="bg-gradient-to-br from-indigo-50 via-white to-blue-50 p-4 space-y-4 min-h-[6rem]">
                     <div v-for="(message, index) in chatHistory" :key="index"
                          :class="[
                             'flex transition-all duration-300',
                             message.role === 'assistant' ? 'justify-start' : 'justify-end',
-                        !isChatExpanded && 'scale-90 opacity-80']">
+                            !isChatExpanded && 'scale-90 opacity-80'
+                         ]">
                         <div :class="[
-                                'max-w-xs p-3 rounded-lg transition-all duration-300 relative',
+                                'max-w-xs sm:max-w-sm md:max-w-md p-3 rounded-lg transition-all duration-300 relative shadow-sm',
                                 message.role === 'assistant'
-                                    ? 'bg-gray-300 text-black'
-                                    : 'bg-sky-300 border text-black',
+                                    ? 'bg-white border border-indigo-100 text-gray-800'
+                                    : 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white',
                                 !isChatExpanded && 'p-2 max-w-[200px] text-xs'
                             ]">
-                            <!-- Контент сообщения -->
+                            <!-- Message content -->
                             <p class="text-sm transition-all mb-2 pr-6"
                                :class="!isChatExpanded && 'text-xs leading-tight'">
                                 {{ message.content }}
                             </p>
 
-                            <!-- Кнопка воспроизведения -->
+                            <!-- Play button -->
                             <button v-if="message.role === 'assistant' && message.audio_url"
                                     @click.stop="toggleAudio(message)"
-                                    class="absolute top-2 right-2 p-1 hover:bg-gray-400/30 rounded-full transition-colors">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path v-if="currentAudioId !== message.id"
-                                          stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                          d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
-                                    <path v-else
-                                          stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                          d="M10 9h4v6h-4V9zM14 9h4v6h-4V9z"/>
-                                </svg>
+                                    class="absolute top-2 right-2 p-1 hover:bg-indigo-100/30 rounded-full transition-colors">
+                                <Play v-if="currentAudioId !== message.id" class="w-4 h-4" />
+                                <Pause v-else class="w-4 h-4" />
                             </button>
 
-                            <!-- Таймстамп -->
+                            <!-- Timestamp -->
                             <p class="text-xs mt-1 opacity-70 transition-opacity"
                                :class="!isChatExpanded && 'opacity-0 h-0'">
                                 {{ message.timestamp }}
@@ -113,36 +99,36 @@
                 </div>
             </div>
 
-            <!-- Блок ввода -->
-            <div class="flex gap-4">
-
-                <!-- Текстовый ввод -->
+            <!-- Input area -->
+            <div class="flex gap-4 border-t pt-4 border-indigo-100">
+                <!-- Text input -->
                 <div class="flex-1">
                     <textarea
                         v-model="userInput"
                         @keyup.enter="sendTextMessage"
-                        class="w-full p-2 border rounded-lg"
+                        class="w-full p-2 border border-indigo-200 rounded-lg focus:border-indigo-400 focus:ring-2 focus:ring-indigo-200 outline-none transition-all duration-300"
                         rows="2"
                         placeholder="Введите текст сообщения..."
                     ></textarea>
                 </div>
 
-                <!-- Кнопка отправки -->
+                <!-- Send button -->
                 <button
                     @click="sendTextMessage"
                     :disabled="isSending"
-                    class="self-end bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded"
+                    class="self-end bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white py-2 px-4 rounded-lg transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg disabled:opacity-50 disabled:transform-none disabled:hover:scale-100"
                 >
-                    {{ isSending ? 'Отправка...' : 'Отправить' }}
+                    <span v-if="isSending">Отправка...</span>
+                    <Send v-else class="w-5 h-5" />
                 </button>
             </div>
-
         </div>
     </div>
 </template>
 
 <script setup>
 import {ref, onMounted, watch, nextTick} from 'vue';
+import { Mic, Play, Pause, Send, ChevronDown } from 'lucide-vue-next';
 import axios from 'axios';
 
 const selectedLanguage = ref('ru-RU');
@@ -330,6 +316,7 @@ const sendTextMessage = async () => {
 };
 </script>
 
+
 <style scoped>
 @keyframes ping-slow {
     0% {
@@ -344,5 +331,23 @@ const sendTextMessage = async () => {
 
 .animate-ping-slow {
     animation: ping-slow 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Custom scrollbar styling */
+.overflow-y-auto::-webkit-scrollbar {
+    width: 6px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+    background-color: rgba(99, 102, 241, 0.3);
+    border-radius: 3px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(99, 102, 241, 0.5);
 }
 </style>

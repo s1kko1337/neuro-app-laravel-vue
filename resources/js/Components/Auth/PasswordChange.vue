@@ -1,6 +1,6 @@
 
 <template>
-    <div class="bg-gradient-to-br from-indigo-50 via-white to-blue-50 min-h-screen py-12">
+    <div class="bg-gradient-to-br from-indigo-50 via-white to-blue-50 min-h-screen py-12 w-full">
         <!-- Хедер с анимированным фоном -->
         <header class="relative py-12 mb-10 overflow-hidden">
             <div class="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-600 opacity-90"></div>

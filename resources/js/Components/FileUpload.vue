@@ -1,47 +1,55 @@
 <template>
-    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-        <div class="w-96 rounded-lg shadow-lg bg-secondary p-6">
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="w-96 rounded-2xl shadow-lg bg-white p-6 transform transition-all duration-300 hover:shadow-xl">
             <div class="flex items-center justify-between mb-4">
-                <h2 class="text-xl font-semibold text-gray-900">
-                    Upload Files
+                <h2 class="text-xl font-semibold text-gray-800">
+                    Загрузить файл
                 </h2>
                 <button
                     @click="onClose"
-                    class="p-1 rounded-lg hover:bg-secondary text-accent"
+                    class="p-2 rounded-lg hover:bg-indigo-50 text-gray-500 transition-colors duration-300"
                 >
-                    <X size="20" class="text-gray-900"/>
+                    <X size="20" />
                 </button>
             </div>
 
-            <div class="border-2 border-dashed rounded-lg p-8 text-center border-secondary">
-                <Upload
-                    :class="`mx-auto mb-4 text-accent`"
-                    size="32"
-                />
-                <p class="text-accent">
-                    Drag and drop files here, or click to select
-                </p>
+            <div class="bg-gradient-to-br from-indigo-50 via-white to-blue-50 rounded-lg p-6 text-center">
                 <input type="file" ref="fileInput" class="hidden" @change="handleFileUpload" multiple />
-                <button @click="triggerFileInput" class="mt-4 px-4 py-2 bg-accent text-white rounded-lg hover:bg-blue-600">
-                    Select Files
+                <button
+                    @click="triggerFileInput"
+                    class="flex items-center justify-center gap-2 w-full px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-lg transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg"
+                >
+                    <Upload size="18" />
+                    <span>Загрузить файл</span>
                 </button>
             </div>
 
             <div v-if="uploadedFiles.length > 0" class="mt-4">
-                <h3 class="text-lg font-semibold text-gray-900">Uploaded Files</h3>
-                <ul>
-                    <li v-for="file in uploadedFiles" :key="file.id" class="text-accent ml-4 space-y-2">
-<!--                        <a :href="file.url" target="_blank">{{ file.name }}</a>-->
-                        <div class="flex justify-between group">
-                            <a @click="previewFile(file)" class="group-hover:text-red-500">{{ file.name }}</a>
-                            <button @click="deleteFile(file)" class="group-hover:text-red-500">
-                                <X size="20" class="text-gray-900"/>
+                <h3 class="text-lg font-semibold text-gray-800 mb-2">Uploaded Files</h3>
+                <ul class="space-y-2 max-h-60 overflow-y-auto">
+                    <li v-for="file in uploadedFiles" :key="file.id" class="bg-gradient-to-br from-indigo-50 via-white to-blue-50 rounded-lg p-2">
+                        <div class="flex justify-between items-center group">
+                            <button
+                                @click="previewFile(file)"
+                                class="text-gray-700 hover:text-indigo-600 text-left truncate max-w-[80%] transition-colors duration-300"
+                            >
+                                {{ file.name }}
+                            </button>
+                            <button
+                                @click="deleteFile(file)"
+                                class="text-gray-400 hover:text-red-500 p-1 transition-colors duration-300"
+                            >
+                                <Trash2 size="16" />
                             </button>
                         </div>
                     </li>
                 </ul>
-                <button @click="createCollection" class="mt-4 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600">
-                    Create collection
+                <button
+                    @click="createCollection"
+                    class="mt-4 w-full px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-lg transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg flex items-center justify-center gap-2"
+                >
+                    <FolderPlus size="18" />
+                    <span>Создать коллекцию</span>
                 </button>
             </div>
         </div>
@@ -50,7 +58,7 @@
 
 <script>
 import axios from "axios";
-import { X, Upload } from "lucide-vue-next";
+import { X, Upload, Trash2, FolderPlus } from "lucide-vue-next";
 import {onMounted, ref} from "vue";
 
 export default {
@@ -72,6 +80,8 @@ export default {
     components: {
         X,
         Upload,
+        Trash2,
+        FolderPlus
     },
     setup(props) {
         const fileInput = ref(null);
