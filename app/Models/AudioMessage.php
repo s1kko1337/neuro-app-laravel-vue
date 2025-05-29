@@ -5,21 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 
-class UserSurveyChatMessages extends Model
+class AudioMessage extends Model
 {
-    protected $table = "user_survey_chat_messages";
+    protected $table = "audio_messages";
 
     protected $fillable = [
-        "user_id",
-        "is_bot",
-        "is_final",
-        "content",
+        "message_id",
         "audio_path",
-    ];
-
-    protected $casts = [
-        'is_bot' => 'boolean',
-        'is_final' => 'boolean',
     ];
 
     protected $appends = ['audio_url'];

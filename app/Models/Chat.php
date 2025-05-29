@@ -9,7 +9,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Chat extends Model
 {
     protected $table = 'chats';
-    protected $fillable = ['user_id'];
+    protected $fillable = ['user_id', 'is_system'];
+
+    protected $casts = [
+        'is_system' => 'boolean',
+    ];
 
     public function user(): BelongsTo{
         return $this->belongsTo(User::class, 'user_id','id');
