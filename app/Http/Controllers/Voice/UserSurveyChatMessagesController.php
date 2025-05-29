@@ -40,7 +40,7 @@ class UserSurveyChatMessagesController extends Controller
             'language' => 'required|string|in:en-US,ru-RU,de-DE',
             'tts_provider' => 'sometimes|string|in:espeak,yandex',
             // УКАЗАТЬ МОДЕЛЬ
-            'model' => 'string|in:qwen2.5:3b'
+            'model' => 'string|in:gemma3:1b'
         ]);
 
         try {
@@ -53,10 +53,15 @@ class UserSurveyChatMessagesController extends Controller
                     'message_type' => 'user'
                 ]);
 
-                // Получаем историю диалога для контекста
                 $chatHistory = UserSurveyChatMessages::where('user_id', auth()->id())
                     ->orderBy('created_at', 'asc')
                     ->get()
+                    ->map(function ($message) {
+                        return [
+                            'content' => $message->content,
+                            'role' => $message->is_bot ? 'assistant' : 'user'
+                        ];
+                    })
                     ->toArray();
 
                 // Формируем промпт для Ollama
@@ -64,7 +69,7 @@ class UserSurveyChatMessagesController extends Controller
 
                 // Отправляем запрос к Ollama
 //                $ollamaResponse = $this->ollamaService->callOllama($prompt, $validatedData['model']); // или сделать config('survey.model');
-                $ollamaResponse = $this->ollamaService->callOllama($prompt, "qwen2.5:3b");
+                $ollamaResponse = $this->ollamaService->callOllama($prompt, "gemma3:1b");
 
                 // Парсим ответ Ollama
                 $responseContent = $ollamaResponse['message']['content'];
@@ -72,7 +77,7 @@ class UserSurveyChatMessagesController extends Controller
 
                 if ($isFinal)
                 {
-                    $this->ollamaService->generateParameters($chatHistory, "qwen2.5:3b");
+                    $this->ollamaService->generateParameters($chatHistory, "gemma3:1b");
                 }
 
                 // Генерируем аудио ответ согласно content
@@ -104,7 +109,7 @@ class UserSurveyChatMessagesController extends Controller
             return response()->json([
                 'success' => false,
                 'error' => 'Message processing failed',
-                'details' => $e->getMessage()
+                'details' => $e->getMessage() . PHP_EOL . print_r($e->getTraceAsString())
             ], 500);
         }
     }
