@@ -111,7 +111,7 @@ class UserSurveyChatMessagesController extends Controller
             return response()->json([
                 'success' => false,
                 'error' => 'Message processing failed',
-                'details' => $e->getMessage() . PHP_EOL . print_r($e->getTraceAsString())
+                'details' => $e->getMessage()
             ], 500);
         }
     }
