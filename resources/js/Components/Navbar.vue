@@ -32,6 +32,18 @@
                             Пройти опрос
                         </div>
                     </router-link>
+<!--                    <router-link v-else to="/survey-groups">-->
+<!--                        <div-->
+<!--                            class="text-lg font-semibold text-gray-800 hover:text-indigo-600 transition-colors duration-300">-->
+<!--                            Подобрать интересы-->
+<!--                        </div>-->
+<!--                    </router-link>-->
+                    <router-link to="/survey-groups">
+                        <div
+                            class="text-lg font-semibold text-gray-800 hover:text-indigo-600 transition-colors duration-300">
+                            Подобрать интересы
+                        </div>
+                    </router-link>
                     <template v-if="!authStore.isAuthenticated">
                         <router-link
                             :to="{name:'register'}"

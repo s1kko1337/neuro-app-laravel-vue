@@ -39,6 +39,15 @@ const routes = [
         }
     },
     {
+        path: '/survey-groups',
+        name: 'SurveyGroups',
+        component: () => import('../Components/UserGroups.vue'),
+        meta: {
+            requiresAuth: true,
+            requiresVerification: true
+        }
+    },
+    {
         path: '/chat/:chatId',
         name: 'ChatDetail',
         component: Chat,

@@ -9,6 +9,10 @@ Route::post('/survey', [\App\Http\Controllers\Voice\UserSurveyChatMessagesContro
 
 Route::post('/survey_init', [\App\Http\Controllers\Voice\UserSurveyChatMessagesController::class, 'getOrCreateSystemChat']);
 
+
+Route::post('/relevante_group', [\App\Http\Controllers\MatchController::class, 'match']);
+Route::get('/relevante_group', [\App\Http\Controllers\MatchController::class, 'groups']);
+
 Route::get('/get_audio/{path}', [\App\Http\Controllers\Voice\AudioController::class, 'getAudio'])
     ->where('path', '.*')
     ->name('audio.file');

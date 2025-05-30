@@ -121,6 +121,8 @@ class UserSurveyChatMessagesController extends Controller
                             'user_id'=>$user->id,
                             'parameters' =>implode(',',$hobbies)
                     ])->toArray();
+
+                    $userSurveyArray = $userSurvey;
                 }
 
                 $botResponse = $this->audioService->synthesizeAndSave($chat, 'assistant', $responseContent, $validatedData['language'], $validatedData['tts_provider']);
