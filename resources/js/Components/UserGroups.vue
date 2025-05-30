@@ -100,6 +100,7 @@ const triggerMatch = async () => {
                      class="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
                     <h3 class="font-semibold text-lg">{{ group.name }}</h3>
                     <p class="text-gray-600">{{ group.description }}</p>
+                    <p class="text-gray-600">{{ group.parameters }}</p>
                     <div class="mt-2 flex flex-wrap gap-2">
                         <span v-for="(tag, tagIndex) in group.tags" :key="tagIndex"
                               class="px-2 py-1 bg-indigo-100 text-indigo-800 text-xs rounded-full">

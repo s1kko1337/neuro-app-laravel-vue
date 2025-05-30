@@ -86,12 +86,12 @@
             <!-- Empty state when no chat is selected -->
             <div v-if="!currentChatId" class="flex-1 flex items-center justify-center overflow-y-auto">
                 <div class="text-center p-6 bg-gradient-to-br from-indigo-50 via-white to-blue-50 rounded-2xl shadow-md transform transition-all duration-300 hover:shadow-lg border border-indigo-100 max-w-md">
-                    <h2 class="text-xl font-semibold mb-4 text-gray-800">Select a chat or start a new one</h2>
+                    <h2 class="text-xl font-semibold mb-4 text-gray-800">Сoздайте чат или сделайте выбoр из списка</h2>
                     <button
                         class="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-lg transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg"
                         @click="addChatHandler"
                     >
-                        New Chat
+                        Нoвый чат
                     </button>
                 </div>
             </div>
